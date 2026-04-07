@@ -1,18 +1,18 @@
 import { lazy } from 'react'
 import type { ComponentType } from 'react'
 
-type LazyFactory = () => Promise<{ default: ComponentType<unknown> }>
+type WithSkeleton<P> = ComponentType<P> & { skeleton?: ComponentType }
 
-type ComponentWithSkeleton = ComponentType<unknown> & {
-  skeleton?: ComponentType
-}
-
-export function lazyWithSkeleton(factory: LazyFactory): ComponentWithSkeleton {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function lazyWithSkeleton<P = any>(
+  factory: () => Promise<{ default: ComponentType<P> }>,
+): WithSkeleton<P> {
   let skeletonComponent: ComponentType | undefined
 
-  const wrappedFactory: LazyFactory = async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wrappedFactory = async (): Promise<{ default: ComponentType<any> }> => {
     const mod = await factory()
-    const component = mod.default as ComponentWithSkeleton
+    const component = mod.default as WithSkeleton<P>
 
     // Extract the skeleton named export from the lazily-loaded module
     const modRecord = mod as Record<string, unknown>
@@ -25,7 +25,7 @@ export function lazyWithSkeleton(factory: LazyFactory): ComponentWithSkeleton {
     return { default: component }
   }
 
-  const LazyComponent = lazy(wrappedFactory) as unknown as ComponentWithSkeleton
+  const LazyComponent = lazy(wrappedFactory) as unknown as WithSkeleton<P>
 
   // Define a getter so SkeletonWrapper can read the skeleton after first load
   Object.defineProperty(LazyComponent, 'skeleton', {
@@ -35,5 +35,5 @@ export function lazyWithSkeleton(factory: LazyFactory): ComponentWithSkeleton {
     configurable: true,
   })
 
-  return LazyComponent
+  return LazyComponent as WithSkeleton<P>
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Project } from 'ts-morph'
-import { applyLazyToLazyWith, applyDynamicToDynamicWith } from '../transforms.js'
+import { applyWrapWithSkeletonWrapper, applyLazyToLazyWith, applyDynamicToDynamicWith } from '../transforms.js'
 import type { SkeletalCandidate } from '../../ast-scanner/types.js'
 
 function createCandidate(
@@ -18,6 +18,65 @@ function createCandidate(
     ...overrides,
   }
 }
+
+describe('applyWrapWithSkeletonWrapper', () => {
+  it('adds skeleton import and fallback prop to SkeletonWrapper', () => {
+    const project = new Project({ useInMemoryFileSystem: true })
+    project.createSourceFile('/src/app/page.tsx', `
+import { SkeletonWrapper } from 'skeletal'
+import { UserCard } from '../components/UserCard'
+
+export default function Page() {
+  return (
+    <SkeletonWrapper>
+      <UserCard userId="u1" />
+    </SkeletonWrapper>
+  )
+}
+`)
+    const candidate = createCandidate({
+      name: 'UserCard',
+      sourceFile: '/src/components/UserCard.tsx',
+      usageFile: '/src/app/page.tsx',
+      pattern: 'rsc',
+      codemod: 'wrap-with-skeleton-wrapper',
+    })
+    const result = applyWrapWithSkeletonWrapper(candidate, project)
+    expect(result.isOk()).toBe(true)
+    if (result.isOk()) expect(result.value.alreadyApplied).toBe(false)
+    const text = project.getSourceFile('/src/app/page.tsx')?.getFullText() ?? ''
+    expect(text).toContain('UserCardSkeleton')
+    expect(text).toContain('fallback={<UserCardSkeleton />}')
+    expect(text).not.toContain('Object.assign')
+  })
+
+  it('is idempotent when fallback prop already present', () => {
+    const project = new Project({ useInMemoryFileSystem: true })
+    project.createSourceFile('/src/app/page.tsx', `
+import { SkeletonWrapper } from 'skeletal'
+import { UserCard } from '../components/UserCard'
+import { UserCardSkeleton } from '../components/UserCard.skeleton'
+
+export default function Page() {
+  return (
+    <SkeletonWrapper fallback={<UserCardSkeleton />}>
+      <UserCard userId="u1" />
+    </SkeletonWrapper>
+  )
+}
+`)
+    const candidate = createCandidate({
+      name: 'UserCard',
+      sourceFile: '/src/components/UserCard.tsx',
+      usageFile: '/src/app/page.tsx',
+      pattern: 'rsc',
+      codemod: 'wrap-with-skeleton-wrapper',
+    })
+    const result = applyWrapWithSkeletonWrapper(candidate, project)
+    expect(result.isOk()).toBe(true)
+    if (result.isOk()) expect(result.value.alreadyApplied).toBe(true)
+  })
+})
 
 describe('applyLazyToLazyWith', () => {
   it('adds lazyWithSkeleton import and replaces React.lazy', () => {

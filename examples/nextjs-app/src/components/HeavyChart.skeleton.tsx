@@ -9,7 +9,7 @@ import { Sk } from 'skeletal'
 export function HeavyChartSkeleton() {
   return (
     <div>
-    <Sk.Card width="100%" height={200} />
+      <Sk.Card width="100%" height={200} />
     </div>
   )
 }

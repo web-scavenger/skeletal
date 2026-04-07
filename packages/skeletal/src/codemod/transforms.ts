@@ -1,5 +1,5 @@
 import { relative, dirname } from 'node:path'
-import type { Project } from 'ts-morph'
+import type { Project, JsxOpeningElement } from 'ts-morph'
 import { SyntaxKind } from 'ts-morph'
 import { ok, err, ERROR_CODES } from '../errors.js'
 import type { Result, SkeletalError } from '../errors.js'
@@ -28,21 +28,43 @@ export function applyWrapWithSkeletonWrapper(
   const skeletonSourcePath = candidate.sourceFile.replace(/\.(js|tsx?|jsx?)$/, '') + '.skeleton.tsx'
   const skeletonImportPath = toRelativeImport(candidate.usageFile, skeletonSourcePath)
 
-  // Idempotency: check if skeleton assignment already exists
-  const alreadyHasAssignment = sourceFile.getDescendantsOfKind(SyntaxKind.ExpressionStatement)
-    .some(stmt => {
-      const text = stmt.getText()
+  // Find the <SkeletonWrapper> that directly wraps this component
+  let wrapperToUpdate: JsxOpeningElement | undefined
+
+  for (const opening of sourceFile.getDescendantsOfKind(SyntaxKind.JsxOpeningElement)) {
+    if (opening.getTagNameNode().getText() !== 'SkeletonWrapper') continue
+
+    const jsxEl = opening.getParent()?.asKind(SyntaxKind.JsxElement)
+    if (!jsxEl) continue
+
+    // Check this wrapper directly contains our component
+    const containsComponent = jsxEl.getJsxChildren().some(child => {
+      const tag =
+        child.asKind(SyntaxKind.JsxElement)?.getOpeningElement().getTagNameNode().getText() ??
+        child.asKind(SyntaxKind.JsxSelfClosingElement)?.getTagNameNode().getText()
+      return tag === candidate.name
+    })
+    if (!containsComponent) continue
+
+    // Idempotency: fallback prop already references this skeleton
+    const alreadyHasFallback = opening.getAttributes().some(attr => {
+      const jsxAttr = attr.asKind(SyntaxKind.JsxAttribute)
       return (
-        (text.includes(`${candidate.name}.skeleton`) || text.includes(`Object.assign(${candidate.name}`)) &&
-        text.includes(skeletonName)
+        jsxAttr?.getNameNode().getText() === 'fallback' &&
+        (jsxAttr.getInitializer()?.getText().includes(skeletonName) ?? false)
       )
     })
+    if (alreadyHasFallback) return ok({ alreadyApplied: true })
 
-  if (alreadyHasAssignment) {
+    wrapperToUpdate = opening
+    break
+  }
+
+  if (!wrapperToUpdate) {
     return ok({ alreadyApplied: true })
   }
 
-  // Add import for this specific skeleton (check by named import, not path)
+  // Add skeleton import if not already present
   const alreadyImported = sourceFile.getImportDeclarations().some(d =>
     d.getNamedImports().some(n => n.getName() === skeletonName),
   )
@@ -53,8 +75,11 @@ export function applyWrapWithSkeletonWrapper(
     })
   }
 
-  // Use Object.assign to attach skeleton — avoids TypeScript "Property does not exist" errors
-  sourceFile.addStatements(`\nObject.assign(${candidate.name}, { skeleton: ${skeletonName} })`)
+  // Add fallback={<SkeletonName />} to the SkeletonWrapper opening element
+  wrapperToUpdate.addAttribute({
+    name: 'fallback',
+    initializer: `{<${skeletonName} />}`,
+  })
 
   return ok({ alreadyApplied: false })
 }
@@ -143,6 +168,11 @@ export function applyDynamicToDynamicWith(
     if (callExpr.getExpression().getText() !== 'dynamic') return
     callExpr.getExpression().replaceWithText('dynamicWithSkeleton')
   })
+
+  // Remove the now-unused `import dynamic from 'next/dynamic'`
+  sourceFile.getImportDeclaration(
+    d => d.getModuleSpecifierValue() === 'next/dynamic',
+  )?.remove()
 
   return ok({ alreadyApplied: false })
 }

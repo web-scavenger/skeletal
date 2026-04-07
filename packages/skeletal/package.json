@@ -25,6 +25,10 @@
       "import": "./dist/vite/index.js",
       "types": "./dist/vite/index.d.ts"
     },
+    "./next-transform": {
+      "import": "./dist/next-transform/index.js",
+      "types": "./dist/next-transform/index.d.ts"
+    },
     "./styles.css": "./dist/primitives/styles.css"
   },
   "scripts": {

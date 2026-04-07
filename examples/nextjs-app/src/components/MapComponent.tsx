@@ -2,7 +2,7 @@
 // Pattern 4 — dynamic: loaded via next/dynamic() (standalone — no SkeletonWrapper required)
 // skeletal will detect the next/dynamic() call in dashboard/page.tsx
 
-export function MapComponent({ location }: { location: string }) {
+export default function MapComponent({ location }: { location: string }) {
   return (
     <div className="map">
       <div className="map__placeholder">

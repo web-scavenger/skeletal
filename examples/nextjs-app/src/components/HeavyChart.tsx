@@ -16,7 +16,7 @@ const DATA: DataPoint[] = [
   { month: 'Jun', value: 580 },
 ]
 
-export function HeavyChart({ title }: { title: string }) {
+export default function HeavyChart({ title }: { title: string }) {
   const max = Math.max(...DATA.map(d => d.value))
 
   return (

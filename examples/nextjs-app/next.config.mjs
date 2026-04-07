@@ -1,6 +1,5 @@
-import type { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // Enable the skeletal marker transform during analysis
   // Usage: SKELETAL_ANALYZE=1 next dev
   webpack: (config) => {

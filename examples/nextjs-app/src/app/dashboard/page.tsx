@@ -1,15 +1,14 @@
 'use client'
 import React from 'react'
-import dynamic from 'next/dynamic'
 import { SkeletonWrapper, lazyWithSkeleton } from 'skeletal'
-import { dynamicWithSkeleton } from "skeletal/next";
+import { dynamicWithSkeleton } from 'skeletal/next'
 
 // Pattern 3 — lazy: React.lazy() inside SkeletonWrapper
-const HeavyChart = lazyWithSkeleton(() => import('../../components/HeavyChart.js').then(m => ({ default: m.HeavyChart })))
+const HeavyChart = lazyWithSkeleton(() => import('../../components/HeavyChart'))
 
 // Pattern 4 — dynamic: next/dynamic() standalone (no SkeletonWrapper needed for detection)
 const MapComponent = dynamicWithSkeleton(
-  () => import('../../components/MapComponent.js').then(m => ({ default: m.MapComponent })),
+  () => import('../../components/MapComponent'),
   { ssr: false },
 )
 
