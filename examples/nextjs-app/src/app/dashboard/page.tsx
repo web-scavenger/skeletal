@@ -1,6 +1,5 @@
 'use client'
 import React from 'react'
-import dynamic from 'next/dynamic'
 import { SkeletonWrapper, lazyWithSkeleton } from 'skeletal'
 import { dynamicWithSkeleton } from 'skeletal/next'
 
