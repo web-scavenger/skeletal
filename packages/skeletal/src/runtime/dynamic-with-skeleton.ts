@@ -10,26 +10,24 @@ interface DynamicOptions {
   [key: string]: unknown
 }
 
-type DynamicFactory = () => Promise<{ default: ComponentType<unknown> }>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFactory = () => Promise<{ default: ComponentType<any> }>
 
-type ComponentWithSkeleton = ComponentType<unknown> & {
-  skeleton?: ComponentType
-}
+type WithSkeleton<P> = ComponentType<P> & { skeleton?: ComponentType }
 
-type NextDynamic = (
-  factory: DynamicFactory,
+type NextDynamic = (factory: AnyFactory, options?: DynamicOptions) => ComponentType
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function dynamicWithSkeleton<P = any>(
+  factory: () => Promise<{ default: ComponentType<P> }>,
   options?: DynamicOptions,
-) => ComponentWithSkeleton
-
-export function dynamicWithSkeleton(
-  factory: DynamicFactory,
-  options?: DynamicOptions,
-): ComponentWithSkeleton {
+): WithSkeleton<P> {
   let skeletonComponent: ComponentType | undefined
 
-  const wrappedFactory: DynamicFactory = async () => {
+  const wrappedFactory: AnyFactory = async () => {
     const mod = await factory()
-    const component = mod.default as ComponentWithSkeleton
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const component = mod.default as WithSkeleton<any>
     const modRecord = mod as Record<string, unknown>
 
     if (typeof modRecord['skeleton'] === 'function') {
@@ -53,5 +51,5 @@ export function dynamicWithSkeleton(
     configurable: true,
   })
 
-  return DynComponent
+  return DynComponent as unknown as WithSkeleton<P>
 }

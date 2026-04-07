@@ -1,11 +1,11 @@
 import { SkeletonWrapper } from 'skeletal'
-import { UserCard } from '../components/UserCard.js'
-import { ProfileCard } from '../components/ProfileCard.js'
-import { UserCardSkeleton } from "../components/UserCard.skeleton";
-import { ProfileCardSkeleton } from "../components/ProfileCard.skeleton";
+import { UserCard } from '../components/UserCard'
+import { ProfileCard } from '../components/ProfileCard'
+import { UserCardSkeleton } from '../components/UserCard.skeleton'
+import { ProfileCardSkeleton } from '../components/ProfileCard.skeleton'
 
-// Pattern 1 — RSC: UserCard is async, wrapped in SkeletonWrapper
-// Pattern 2 — CSR: ProfileCard is non-async client component, wrapped in SkeletonWrapper
+// Pattern 1 — RSC: UserCard is async, SkeletonWrapper auto-shows skeleton via fallback prop
+// Pattern 2 — CSR: ProfileCard is non-async client component, same pattern
 
 export default function HomePage() {
   return (
@@ -14,21 +14,17 @@ export default function HomePage() {
 
       <section style={{ marginBottom: 32 }}>
         <h2>User profile (RSC — async Server Component)</h2>
-        <SkeletonWrapper>
+        <SkeletonWrapper fallback={<UserCardSkeleton />}>
           <UserCard userId="u_001" />
         </SkeletonWrapper>
       </section>
 
       <section>
         <h2>Stats (CSR — client component with useEffect)</h2>
-        <SkeletonWrapper>
+        <SkeletonWrapper fallback={<ProfileCardSkeleton />}>
           <ProfileCard username="janedoe" />
         </SkeletonWrapper>
       </section>
     </main>
   )
 }
-
-Object.assign(UserCard, { skeleton: UserCardSkeleton })
-
-Object.assign(ProfileCard, { skeleton: ProfileCardSkeleton })
