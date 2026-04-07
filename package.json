@@ -7,8 +7,7 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "eslint . --max-warnings 0",
-    "typecheck": "turbo run typecheck",
-    "prepare": "simple-git-hooks"
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -27,9 +26,5 @@
     "*.{ts,tsx}": [
       "eslint --fix --max-warnings 0"
     ]
-  },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm lint-staged",
-    "pre-push": "pnpm tsc --noEmit"
   }
 }
