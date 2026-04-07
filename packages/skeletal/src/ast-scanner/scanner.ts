@@ -209,7 +209,7 @@ function findDynamicCandidates(sourceFile: SourceFile): {
   const hasDynamicImport = sourceFile.getImportDeclarations().some(
     decl =>
       decl.getModuleSpecifierValue() === 'next/dynamic' ||
-      decl.getModuleSpecifierValue() === 'skeletal/next',
+      decl.getModuleSpecifierValue() === 'skeletal-ui/next',
   )
   if (!hasDynamicImport) return []
 

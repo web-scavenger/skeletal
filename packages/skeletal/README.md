@@ -5,7 +5,7 @@
 skeletal scans your codebase, crawls your running app with Playwright to capture real element geometry, and generates pixel-accurate `.skeleton.tsx` files — no manual shimmer code, no copy-pasting CSS, no drift from the real UI.
 
 ```sh
-npx skeletal analyze
+npx skeletal-ui analyze
 ```
 
 ---
@@ -55,11 +55,11 @@ Re-run `skeletal analyze` any time your component changes. `skeletal check` fail
 ## Installation
 
 ```sh
-npm install skeletal
+npm install skeletal-ui
 # or
-pnpm add skeletal
+pnpm add skeletal-ui
 # or
-yarn add skeletal
+yarn add skeletal-ui
 ```
 
 For browser crawl (one-time, optional but recommended):
@@ -77,7 +77,7 @@ npx playwright install chromium
 **1. Initialise**
 
 ```sh
-npx skeletal init
+npx skeletal-ui init
 ```
 
 Walks you through setup and creates `skeletal.config.ts`.
@@ -85,7 +85,7 @@ Walks you through setup and creates `skeletal.config.ts`.
 **2. Start your dev server, then analyse**
 
 ```sh
-npx skeletal analyze
+npx skeletal-ui analyze
 ```
 
 Finds candidates, crawls routes, generates `.skeleton.tsx` files, and patches your source.
@@ -94,7 +94,7 @@ Finds candidates, crawls routes, generates `.skeleton.tsx` files, and patches yo
 
 ```tsx
 // app/layout.tsx  (Next.js)  or  main.tsx  (Vite)
-import 'skeletal/styles.css'
+import 'skeletal-ui/styles.css'
 ```
 
 Done. Your components now show pixel-accurate skeleton screens while they load.
@@ -119,7 +119,7 @@ skeletal detects and wires four patterns automatically.
 Wrap your component in `<SkeletonWrapper>`:
 
 ```tsx
-import { SkeletonWrapper } from 'skeletal'
+import { SkeletonWrapper } from 'skeletal-ui'
 import { UserCard } from './UserCard'
 
 export default function Page() {
@@ -148,7 +148,7 @@ import { UserCardSkeleton } from './UserCard.skeleton'
 // UserCard.skeleton.tsx — auto-generated, safe to edit after ejecting
 'use client'
 // skeletal:hash:a1b2c3d4
-import { Sk } from 'skeletal'
+import { Sk } from 'skeletal-ui'
 
 export function UserCardSkeleton() {
   return (
@@ -199,7 +199,7 @@ import React from 'react'
 const HeavyChart = React.lazy(() => import('./HeavyChart'))
 
 // After — auto-applied by `skeletal analyze`
-import { lazyWithSkeleton } from 'skeletal'
+import { lazyWithSkeleton } from 'skeletal-ui'
 const HeavyChart = lazyWithSkeleton(() => import('./HeavyChart'))
 ```
 
@@ -215,7 +215,7 @@ import dynamic from 'next/dynamic'
 const Map = dynamic(() => import('./MapComponent'), { ssr: false })
 
 // After — auto-applied by `skeletal analyze`
-import { dynamicWithSkeleton } from 'skeletal/next'
+import { dynamicWithSkeleton } from 'skeletal-ui/next'
 const Map = dynamicWithSkeleton(() => import('./MapComponent'), { ssr: false })
 ```
 
@@ -230,7 +230,7 @@ const Map = dynamicWithSkeleton(() => import('./MapComponent'), { ssr: false })
 Import and use anywhere in your skeleton files:
 
 ```tsx
-import { Sk } from 'skeletal'
+import { Sk } from 'skeletal-ui'
 ```
 
 All primitives are CSS-only (no JavaScript animation), server-safe, and zero-dependency. They render `aria-hidden="true"` spans so screen readers skip them.
@@ -427,7 +427,7 @@ Block container with optional padding and composable children.
 `SkeletonWrapper` is a client component that combines `Suspense` and `ErrorBoundary`. It shows a skeleton while its children suspend and falls back to the skeleton on error.
 
 ```tsx
-import { SkeletonWrapper } from 'skeletal'
+import { SkeletonWrapper } from 'skeletal-ui'
 
 // Explicit fallback (required for Server Components in Next.js App Router)
 <SkeletonWrapper fallback={<UserCardSkeleton />}>
@@ -457,7 +457,7 @@ import { SkeletonWrapper } from 'skeletal'
 Override the default shimmer theme for a subtree using CSS custom properties.
 
 ```tsx
-import { SkeletonProvider } from 'skeletal'
+import { SkeletonProvider } from 'skeletal-ui'
 
 <SkeletonProvider color="#e0e0e0" highlight="#f5f5f5" radius={8} duration={1.2}>
   <Dashboard />
@@ -543,7 +543,7 @@ Copies a generated `.skeleton.tsx` from the skeletal cache into your source tree
 
 ```ts
 // skeletal.config.ts
-import { defineConfig } from 'skeletal'
+import { defineConfig } from 'skeletal-ui'
 
 export default defineConfig({
   // Required
@@ -611,7 +611,7 @@ routes: [
 `skeletal/next` exports `dynamicWithSkeleton` — safe to import in any page or component file:
 
 ```tsx
-import { dynamicWithSkeleton } from 'skeletal/next'
+import { dynamicWithSkeleton } from 'skeletal-ui/next'
 
 const Map = dynamicWithSkeleton(() => import('./Map'), { ssr: false })
 ```
@@ -620,7 +620,7 @@ The build-time marker transform (`skeletal/next-transform`) is for `next.config.
 
 ```js
 // next.config.mjs
-import { skeletalNextTransform } from 'skeletal/next-transform'
+import { skeletalNextTransform } from 'skeletal-ui/next-transform'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -650,7 +650,7 @@ SKELETAL_ANALYZE=1 next dev
 // vite.config.ts
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { skeletalVitePlugin } from 'skeletal/vite'
+import { skeletalVitePlugin } from 'skeletal-ui/vite'
 
 export default defineConfig({
   plugins: [
@@ -671,7 +671,7 @@ Add `skeletal check` to your CI pipeline to fail the build whenever skeletons dr
 ```yaml
 # .github/workflows/check.yml
 - name: Check skeletons
-  run: npx skeletal check
+  run: npx skeletal-ui check
 ```
 
 With JSON output for custom reporting:

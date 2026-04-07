@@ -61,7 +61,7 @@ function buildSkeletonContent(
     `// To customize, run: skeletal eject ${name}`,
     '\'use client\'',
     '',
-    'import { Sk } from \'skeletal\'',
+    'import { Sk } from \'skeletal-ui\'',
     '',
     `export function ${skeletonName}() {`,
     '  return (',

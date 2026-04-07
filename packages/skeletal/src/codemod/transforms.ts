@@ -99,7 +99,7 @@ export function applyLazyToLazyWith(
 
   // Idempotency: check if lazyWithSkeleton already imported
   const hasLazyWithSkeleton = sourceFile.getImportDeclaration(
-    d => d.getModuleSpecifierValue() === 'skeletal',
+    d => d.getModuleSpecifierValue() === 'skeletal-ui',
   )?.getNamedImports().some(n => n.getName() === 'lazyWithSkeleton') ?? false
 
   if (hasLazyWithSkeleton) {
@@ -108,14 +108,14 @@ export function applyLazyToLazyWith(
 
   // Add lazyWithSkeleton import
   const existingSkeletalImport = sourceFile.getImportDeclaration(
-    d => d.getModuleSpecifierValue() === 'skeletal',
+    d => d.getModuleSpecifierValue() === 'skeletal-ui',
   )
   if (existingSkeletalImport) {
     existingSkeletalImport.addNamedImport('lazyWithSkeleton')
   } else {
     sourceFile.addImportDeclaration({
       namedImports: ['lazyWithSkeleton'],
-      moduleSpecifier: 'skeletal',
+      moduleSpecifier: 'skeletal-ui',
     })
   }
 
@@ -147,7 +147,7 @@ export function applyDynamicToDynamicWith(
 
   // Idempotency check
   const hasDynamicWithSkeleton = sourceFile.getImportDeclaration(
-    d => d.getModuleSpecifierValue() === 'skeletal/next',
+    d => d.getModuleSpecifierValue() === 'skeletal-ui/next',
   )?.getNamedImports().some(n => n.getName() === 'dynamicWithSkeleton') ?? false
 
   if (hasDynamicWithSkeleton) {
@@ -157,7 +157,7 @@ export function applyDynamicToDynamicWith(
   // Add dynamicWithSkeleton import
   sourceFile.addImportDeclaration({
     namedImports: ['dynamicWithSkeleton'],
-    moduleSpecifier: 'skeletal/next',
+    moduleSpecifier: 'skeletal-ui/next',
   })
 
   // Replace dynamic() → dynamicWithSkeleton()

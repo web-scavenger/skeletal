@@ -4,7 +4,7 @@
 // To customize, run: skeletal eject UserCard
 'use client'
 
-import { Sk } from 'skeletal'
+import { Sk } from 'skeletal-ui'
 
 export function UserCardSkeleton() {
   return (

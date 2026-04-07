@@ -1,4 +1,4 @@
-import { SkeletonWrapper } from 'skeletal'
+import { SkeletonWrapper } from 'skeletal-ui'
 import { UserCard } from '../components/UserCard'
 import { ProfileCard } from '../components/ProfileCard'
 import { UserCardSkeleton } from '../components/UserCard.skeleton'

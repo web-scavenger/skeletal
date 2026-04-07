@@ -1,4 +1,4 @@
-import { defineConfig } from 'skeletal'
+import { defineConfig } from 'skeletal-ui'
 
 export default defineConfig({
   devServer: 'http://localhost:3000',

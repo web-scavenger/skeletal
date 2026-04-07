@@ -56,7 +56,7 @@ export async function runInit(projectRoot: string): Promise<void> {
     .join(', ')
 
   const configContent = [
-    'import { defineConfig } from \'skeletal\'',
+    'import { defineConfig } from \'skeletal-ui\'',
     '',
     'export default defineConfig({',
     `  devServer: '${String(devServer)}',`,

@@ -4,7 +4,7 @@
 // To customize, run: skeletal eject HeavyChart
 'use client'
 
-import { Sk } from 'skeletal'
+import { Sk } from 'skeletal-ui'
 
 export function HeavyChartSkeleton() {
   return (

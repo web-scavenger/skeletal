@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
-import { SkeletonWrapper, lazyWithSkeleton } from 'skeletal'
-import { dynamicWithSkeleton } from 'skeletal/next'
+import { SkeletonWrapper, lazyWithSkeleton } from 'skeletal-ui'
+import { dynamicWithSkeleton } from 'skeletal-ui/next'
 
 // Pattern 3 — lazy: React.lazy() inside SkeletonWrapper
 const HeavyChart = lazyWithSkeleton(() => import('../../components/HeavyChart'))

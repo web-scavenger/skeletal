@@ -4,7 +4,7 @@
 // To customize, run: skeletal eject MapComponent
 'use client'
 
-import { Sk } from 'skeletal'
+import { Sk } from 'skeletal-ui'
 
 export function MapComponentSkeleton() {
   return (
