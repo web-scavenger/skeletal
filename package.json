@@ -1,0 +1,30 @@
+{
+  "name": "skeletal-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-n": "^17.0.0",
+    "globals": "^15.0.0",
+    "lint-staged": "^15.0.0",
+    "simple-git-hooks": "^2.11.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --max-warnings 0"
+    ]
+  }
+}
