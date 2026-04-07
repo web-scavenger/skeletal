@@ -68,5 +68,20 @@ export async function runInit(projectRoot: string): Promise<void> {
   ].join('\n')
 
   writeFileSync(configPath, configContent, 'utf-8')
-  clack.outro('Created skeletal.config.ts. Run \'skeletal analyze\' to generate skeleton screens.')
+
+  clack.note(
+    [
+      '1. Install the Playwright browser (one-time):',
+      '   npx playwright install chromium',
+      '',
+      '2. Start your dev server, then run:',
+      '   npx skeletal analyze',
+      '',
+      '3. To skip browser crawl and generate minimal skeletons:',
+      '   npx skeletal analyze --no-browser',
+    ].join('\n'),
+    'Next steps',
+  )
+
+  clack.outro('Created skeletal.config.ts')
 }

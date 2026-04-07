@@ -30,12 +30,13 @@ function readSkeletonFileInfo(skeletonPath: string): { hasSkeleton: boolean; isE
 }
 
 function resolveSkeletonPath(sourceFile: string, config: SkeletalConfig): string {
+  // Strip both .js (ESM import suffix) and source extensions
+  const base = sourceFile.replace(/\.(js|tsx?|jsx?)$/, '')
   if (config.output === 'directory' && config.outputDir) {
-    const base = sourceFile.replace(/\.(tsx?|jsx?)$/, '')
     const name = base.split('/').pop() ?? base
     return resolve(config.outputDir, `${name}.skeleton.tsx`)
   }
-  return sourceFile.replace(/\.(tsx?|jsx?)$/, '.skeleton.tsx')
+  return `${base}.skeleton.tsx`
 }
 
 function isHtmlTag(name: string): boolean {
@@ -150,7 +151,7 @@ function findLazyCandidates(sourceFile: SourceFile): {
     const expr = callExpr.getExpression()
     const exprText = expr.getText()
 
-    if (exprText !== 'React.lazy' && exprText !== 'lazy') return
+    if (exprText !== 'React.lazy' && exprText !== 'lazy' && exprText !== 'lazyWithSkeleton') return
 
     // Must be inside a SkeletonWrapper context or variable declaration
     const args = callExpr.getArguments()
@@ -204,9 +205,11 @@ function findDynamicCandidates(sourceFile: SourceFile): {
   importPath: string
   usageFile: string
 }[] {
-  // First check if 'dynamic' is imported from 'next/dynamic'
+  // Check if 'dynamic' or 'dynamicWithSkeleton' is imported
   const hasDynamicImport = sourceFile.getImportDeclarations().some(
-    decl => decl.getModuleSpecifierValue() === 'next/dynamic',
+    decl =>
+      decl.getModuleSpecifierValue() === 'next/dynamic' ||
+      decl.getModuleSpecifierValue() === 'skeletal/next',
   )
   if (!hasDynamicImport) return []
 
@@ -219,7 +222,7 @@ function findDynamicCandidates(sourceFile: SourceFile): {
     if (!callExpr) return
 
     const exprText = callExpr.getExpression().getText()
-    if (exprText !== 'dynamic') return
+    if (exprText !== 'dynamic' && exprText !== 'dynamicWithSkeleton') return
 
     const args = callExpr.getArguments()
     if (args.length === 0 || args[0] === undefined) return
@@ -334,7 +337,7 @@ function findSkeletonWrapperCandidates(
       const init = childVar.getInitializer()
       if (init) {
         const initText = init.getText()
-        if (initText.startsWith('React.lazy(') || initText.startsWith('lazy(')) {
+        if (initText.startsWith('React.lazy(') || initText.startsWith('lazy(') || initText.startsWith('lazyWithSkeleton(')) {
           // This is a lazy component — handled by lazy scanner
           return
         }
@@ -435,14 +438,24 @@ export function scanCandidates(
               d => d.getModuleSpecifierValue() === importPath,
             )
             const resolvedSF = importDecl?.getModuleSpecifierSourceFile()
-            const absSourceFile = resolvedSF?.getFilePath() ?? resolve(fromDir, `${importPath}.tsx`)
+            // Strip any extension from importPath before adding .tsx (handles .js ESM suffix)
+            const importBase = importPath.replace(/\.(js|tsx?|jsx?)$/, '')
+            const absSourceFile = resolvedSF?.getFilePath() ?? resolve(fromDir, `${importBase}.tsx`)
 
             const skeletonPath = resolveSkeletonPath(absSourceFile, config)
             const { hasSkeleton, isEjected } = readSkeletonFileInfo(skeletonPath)
-            const hashNode = resolvedSF ?? project.createSourceFile(`__tmp_${lc.componentName}.ts`, '')
-            const astHash = computeAstHash(hashNode)
-            if (!resolvedSF) {
-              project.removeSourceFile(hashNode)
+            // Prefer resolved source file; fall back to loading from disk if it exists
+            let hashSF = resolvedSF
+            let createdTmp = false
+            if (!hashSF && existsSync(absSourceFile)) {
+              hashSF = project.addSourceFileAtPath(absSourceFile)
+            } else if (!hashSF) {
+              hashSF = project.createSourceFile(`__tmp_${lc.componentName}.ts`, '')
+              createdTmp = true
+            }
+            const astHash = computeAstHash(hashSF)
+            if (createdTmp) {
+              project.removeSourceFile(hashSF)
             }
 
             candidates.push({
@@ -472,14 +485,22 @@ export function scanCandidates(
               d => d.getModuleSpecifierValue() === importPath,
             )
             const resolvedSF = importDecl?.getModuleSpecifierSourceFile()
-            const absSourceFile = resolvedSF?.getFilePath() ?? resolve(fromDir, `${importPath}.tsx`)
+            const importBase = importPath.replace(/\.(js|tsx?|jsx?)$/, '')
+            const absSourceFile = resolvedSF?.getFilePath() ?? resolve(fromDir, `${importBase}.tsx`)
 
             const skeletonPath = resolveSkeletonPath(absSourceFile, config)
             const { hasSkeleton, isEjected } = readSkeletonFileInfo(skeletonPath)
-            const hashNode = resolvedSF ?? project.createSourceFile(`__tmp_dyn_${dc.componentName}.ts`, '')
-            const astHash = computeAstHash(hashNode)
-            if (!resolvedSF) {
-              project.removeSourceFile(hashNode)
+            let dynHashSF = resolvedSF
+            let dynCreatedTmp = false
+            if (!dynHashSF && existsSync(absSourceFile)) {
+              dynHashSF = project.addSourceFileAtPath(absSourceFile)
+            } else if (!dynHashSF) {
+              dynHashSF = project.createSourceFile(`__tmp_dyn_${dc.componentName}.ts`, '')
+              dynCreatedTmp = true
+            }
+            const astHash = computeAstHash(dynHashSF)
+            if (dynCreatedTmp) {
+              project.removeSourceFile(dynHashSF)
             }
 
             candidates.push({

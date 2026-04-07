@@ -7,6 +7,11 @@
   "bin": {
     "skeletal": "./dist/cli/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -19,20 +24,25 @@
     "./vite": {
       "import": "./dist/vite/index.js",
       "types": "./dist/vite/index.d.ts"
-    }
+    },
+    "./styles.css": "./dist/primitives/styles.css"
   },
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.json && copyfiles -u 1 src/primitives/styles.css dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "peerDependencies": {
+    "@playwright/test": ">=1.44",
     "react": ">=18",
     "react-dom": ">=18",
     "typescript": ">=5.0"
   },
   "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    },
     "react-dom": {
       "optional": true
     }
@@ -54,6 +64,7 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "@vitest/coverage-v8": "^1.6.0",
+    "copyfiles": "^2.4.1",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "typescript": "^5.4.0",

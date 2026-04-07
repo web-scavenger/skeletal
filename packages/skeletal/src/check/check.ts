@@ -150,9 +150,10 @@ export function runCheck(
         const hashNode = fn ?? sf
         const currentHash = computeAstHash(hashNode)
 
-        // Detect current pattern
+        // Detect current pattern only for RSC/CSR — lazy/dynamic patterns
+        // are determined by usage site, not by the source function's async status.
         let currentPattern: LoadingPattern = storedPattern
-        if (fn) {
+        if (fn && (storedPattern === 'rsc' || storedPattern === 'csr')) {
           currentPattern = fn.isAsync() ? 'rsc' : 'csr'
         }
 

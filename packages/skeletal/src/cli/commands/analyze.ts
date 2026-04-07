@@ -108,7 +108,7 @@ export async function runAnalyze(options: {
     }
 
     const tree = classify(geometry)
-    const outputPath = candidate.sourceFile.replace(/\.(tsx?|jsx?)$/, '.skeleton.tsx')
+    const outputPath = candidate.sourceFile.replace(/\.(js|tsx?|jsx?)$/, '') + '.skeleton.tsx'
 
     const genResult = generateSkeleton(candidate, tree, outputPath, logger)
     if (genResult.isErr()) {
@@ -175,7 +175,7 @@ async function generateMinimalSkeletons(
       relativeWidth: '100%',
       children: [],
     }]
-    const outputPath = candidate.sourceFile.replace(/\.(tsx?|jsx?)$/, '.skeleton.tsx')
+    const outputPath = candidate.sourceFile.replace(/\.(js|tsx?|jsx?)$/, '') + '.skeleton.tsx'
     const genResult = generateSkeleton(candidate, minimalTree, outputPath, logger)
 
     if (genResult.isErr()) {

@@ -1,8 +1,15 @@
+import { relative, dirname } from 'node:path'
 import type { Project } from 'ts-morph'
 import { SyntaxKind } from 'ts-morph'
 import { ok, err, ERROR_CODES } from '../errors.js'
 import type { Result, SkeletalError } from '../errors.js'
 import type { SkeletalCandidate } from '../ast-scanner/types.js'
+
+function toRelativeImport(fromFile: string, toFile: string): string {
+  const rel = relative(dirname(fromFile), toFile.replace(/\.(js|tsx?|jsx?)$/, ''))
+  // Ensure it starts with ./ or ../
+  return rel.startsWith('.') ? rel : `./${rel}`
+}
 
 export function applyWrapWithSkeletonWrapper(
   candidate: SkeletalCandidate,
@@ -18,32 +25,36 @@ export function applyWrapWithSkeletonWrapper(
   }
 
   const skeletonName = `${candidate.name}Skeleton`
-  const skeletonImportPath = candidate.sourceFile.replace(/\.(tsx?|jsx?)$/, '.skeleton')
+  const skeletonSourcePath = candidate.sourceFile.replace(/\.(js|tsx?|jsx?)$/, '') + '.skeleton.tsx'
+  const skeletonImportPath = toRelativeImport(candidate.usageFile, skeletonSourcePath)
 
   // Idempotency: check if skeleton assignment already exists
   const alreadyHasAssignment = sourceFile.getDescendantsOfKind(SyntaxKind.ExpressionStatement)
     .some(stmt => {
       const text = stmt.getText()
-      return text.includes(`${candidate.name}.skeleton`) && text.includes(skeletonName)
+      return (
+        (text.includes(`${candidate.name}.skeleton`) || text.includes(`Object.assign(${candidate.name}`)) &&
+        text.includes(skeletonName)
+      )
     })
 
   if (alreadyHasAssignment) {
     return ok({ alreadyApplied: true })
   }
 
-  // Add import for skeleton
-  const existingImport = sourceFile.getImportDeclaration(
-    d => d.getModuleSpecifierValue().includes('.skeleton'),
+  // Add import for this specific skeleton (check by named import, not path)
+  const alreadyImported = sourceFile.getImportDeclarations().some(d =>
+    d.getNamedImports().some(n => n.getName() === skeletonName),
   )
-  if (!existingImport) {
+  if (!alreadyImported) {
     sourceFile.addImportDeclaration({
       namedImports: [skeletonName],
       moduleSpecifier: skeletonImportPath,
     })
   }
 
-  // Add Component.skeleton = ComponentSkeleton after last import
-  sourceFile.addStatements(`\n${candidate.name}.skeleton = ${skeletonName}`)
+  // Use Object.assign to attach skeleton — avoids TypeScript "Property does not exist" errors
+  sourceFile.addStatements(`\nObject.assign(${candidate.name}, { skeleton: ${skeletonName} })`)
 
   return ok({ alreadyApplied: false })
 }
