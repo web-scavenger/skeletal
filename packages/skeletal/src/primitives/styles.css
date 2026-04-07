@@ -1,0 +1,31 @@
+:root {
+  --sk-color: #e2e8f0;
+  --sk-highlight: #f1f5f9;
+  --sk-radius: 4px;
+  --sk-duration: 1.5s;
+}
+
+@keyframes skeletalShimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.sk-base {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--sk-color) 25%,
+    var(--sk-highlight) 50%,
+    var(--sk-color) 75%
+  );
+  background-size: 200px 100%;
+  animation: skeletalShimmer var(--sk-duration) infinite;
+  border-radius: var(--sk-radius);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-base {
+    animation: none;
+    background: var(--sk-color);
+  }
+}
