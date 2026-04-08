@@ -1,5 +1,7 @@
 import type { ClassifiedElement, SkeletonTree } from '../classifier/types.js'
 
+const CONTAINER_TYPES: ReadonlySet<string> = new Set(['Card', 'List'])
+
 function indent(level: number): string {
   return '  '.repeat(level)
 }
@@ -24,7 +26,9 @@ export function printElement(el: ClassifiedElement, indentLevel: number): string
   const props = printProps(el.props)
   const ind = indent(indentLevel)
 
-  if (el.children.length === 0) {
+  const hasChildren = el.children.length > 0 && CONTAINER_TYPES.has(el.primitiveType)
+
+  if (!hasChildren) {
     return `${ind}<${tag}${props} />`
   }
 

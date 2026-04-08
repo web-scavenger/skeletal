@@ -1,15 +1,16 @@
 {
-  "name": "skeletal",
-  "version": "0.1.0",
+  "name": "skeletal-ui",
+  "version": "0.2.0",
   "type": "module",
   "description": "Automate skeleton loading screens for React/Next.js TypeScript projects",
   "license": "MIT",
   "bin": {
-    "skeletal": "./dist/cli/index.js"
+    "skeletal-ui": "./dist/cli/index.js"
   },
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "exports": {
@@ -69,6 +70,7 @@
     "@types/react-dom": "^18.0.0",
     "@vitest/coverage-v8": "^1.6.0",
     "copyfiles": "^2.4.1",
+    "jsdom": "^29.0.2",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "typescript": "^5.4.0",

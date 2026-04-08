@@ -99,7 +99,7 @@ export function applyLazyToLazyWith(
 
   // Idempotency: check if lazyWithSkeleton already imported
   const hasLazyWithSkeleton = sourceFile.getImportDeclaration(
-    d => d.getModuleSpecifierValue() === 'skeletal',
+    d => d.getModuleSpecifierValue() === 'skeletal-ui',
   )?.getNamedImports().some(n => n.getName() === 'lazyWithSkeleton') ?? false
 
   if (hasLazyWithSkeleton) {
@@ -108,14 +108,14 @@ export function applyLazyToLazyWith(
 
   // Add lazyWithSkeleton import
   const existingSkeletalImport = sourceFile.getImportDeclaration(
-    d => d.getModuleSpecifierValue() === 'skeletal',
+    d => d.getModuleSpecifierValue() === 'skeletal-ui',
   )
   if (existingSkeletalImport) {
     existingSkeletalImport.addNamedImport('lazyWithSkeleton')
   } else {
     sourceFile.addImportDeclaration({
       namedImports: ['lazyWithSkeleton'],
-      moduleSpecifier: 'skeletal',
+      moduleSpecifier: 'skeletal-ui',
     })
   }
 

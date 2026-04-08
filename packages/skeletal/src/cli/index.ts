@@ -10,7 +10,7 @@ import { runPreview } from './commands/preview.js'
 const projectRoot = process.cwd()
 
 const program = new Command()
-  .name('skeletal')
+  .name('skeletal-ui')
   .description('Automate skeleton loading screens for React/Next.js TypeScript projects')
   .version('0.1.0')
 

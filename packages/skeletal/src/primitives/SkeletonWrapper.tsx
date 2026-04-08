@@ -34,6 +34,8 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 export interface SkeletonWrapperProps {
   children: ReactNode
   fallback?: ReactNode
+  /** Explicitly show the skeleton. Use for CSR components where you control the loading state. */
+  loading?: boolean
 }
 
 function resolveSkeleton(children: ReactNode): ReactNode {
@@ -48,8 +50,12 @@ function resolveSkeleton(children: ReactNode): ReactNode {
   return null
 }
 
-export function SkeletonWrapper({ children, fallback }: SkeletonWrapperProps) {
+export function SkeletonWrapper({ children, fallback, loading }: SkeletonWrapperProps) {
   const resolvedFallback = fallback ?? resolveSkeleton(children) ?? <DefaultPulseSkeleton />
+
+  if (loading) {
+    return <>{resolvedFallback}</>
+  }
 
   return (
     <ErrorBoundary fallback={resolvedFallback}>

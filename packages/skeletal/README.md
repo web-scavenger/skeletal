@@ -1,11 +1,11 @@
-# skeletal
+# skeletal-ui
 
 > Automate skeleton loading screens for React and Next.js TypeScript projects.
 
-skeletal scans your codebase, crawls your running app with Playwright to capture real element geometry, and generates pixel-accurate `.skeleton.tsx` files — no manual shimmer code, no copy-pasting CSS, no drift from the real UI.
+skeletal-ui scans your codebase, crawls your running app with Playwright to capture real element geometry (bounding box, border-radius, font-size, line-height), and generates pixel-accurate `.skeleton.tsx` files — no manual shimmer code, no copy-pasting CSS, no drift from the real UI.
 
 ```sh
-npx skeletal analyze
+npx skeletal-ui analyze
 ```
 
 ---
@@ -43,23 +43,23 @@ npx skeletal analyze
 
 ## How it works
 
-1. **Scan** — skeletal reads your TypeScript source and finds components wrapped in `<SkeletonWrapper>`, `React.lazy()`, or `next/dynamic()`.
-2. **Crawl** — Playwright opens each route of your running dev server, waits for load, and records the bounding box, border-radius, and font-size of every element marked with `data-sk`.
-3. **Generate** — a `.skeleton.tsx` file is co-located next to each component, using `Sk.*` primitives sized to match the real layout.
+1. **Scan** — skeletal-ui reads your TypeScript source and finds components wrapped in `<SkeletonWrapper>`, `React.lazy()`, or `next/dynamic()`.
+2. **Crawl** — Playwright opens each route of your running dev server, waits for load, and records the bounding box, border-radius, font-size, and line-height of every marked element — the exact computed values from the browser, accounting for your Tailwind config and custom CSS.
+3. **Generate** — a `.skeleton.tsx` file is co-located next to each component, using `Sk.*` primitives sized to pixel-accurately match the real layout with no layout jump on state change.
 4. **Wire** — the codemod patches your source files so the skeleton is shown automatically while the real component loads.
 
-Re-run `skeletal analyze` any time your component changes. `skeletal check` fails the build if skeletons are stale — use it in CI.
+Re-run `skeletal-ui analyze` any time your component changes. `skeletal-ui check` fails the build if skeletons are stale — use it in CI.
 
 ---
 
 ## Installation
 
 ```sh
-npm install skeletal
+npm install skeletal-ui
 # or
-pnpm add skeletal
+pnpm add skeletal-ui
 # or
-yarn add skeletal
+yarn add skeletal-ui
 ```
 
 For browser crawl (one-time, optional but recommended):
@@ -68,7 +68,7 @@ For browser crawl (one-time, optional but recommended):
 npx playwright install chromium
 ```
 
-> **Without Playwright** you can still use `skeletal analyze --no-browser` to generate minimal placeholder skeletons instantly.
+> **Without Playwright** you can still use `skeletal-ui analyze --no-browser` to generate minimal placeholder skeletons instantly using AST-only classification.
 
 ---
 
@@ -77,7 +77,7 @@ npx playwright install chromium
 **1. Initialise**
 
 ```sh
-npx skeletal init
+npx skeletal-ui init
 ```
 
 Walks you through setup and creates `skeletal.config.ts`.
@@ -85,7 +85,7 @@ Walks you through setup and creates `skeletal.config.ts`.
 **2. Start your dev server, then analyse**
 
 ```sh
-npx skeletal analyze
+npx skeletal-ui analyze
 ```
 
 Finds candidates, crawls routes, generates `.skeleton.tsx` files, and patches your source.
@@ -94,7 +94,7 @@ Finds candidates, crawls routes, generates `.skeleton.tsx` files, and patches yo
 
 ```tsx
 // app/layout.tsx  (Next.js)  or  main.tsx  (Vite)
-import 'skeletal/styles.css'
+import 'skeletal-ui/styles.css'
 ```
 
 Done. Your components now show pixel-accurate skeleton screens while they load.
@@ -103,9 +103,9 @@ Done. Your components now show pixel-accurate skeleton screens while they load.
 
 ## The four patterns
 
-skeletal detects and wires four patterns automatically.
+skeletal-ui detects and wires four patterns automatically.
 
-| Pattern | Trigger | What skeletal does |
+| Pattern | Trigger | What skeletal-ui does |
 |---|---|---|
 | **RSC** | `async` component inside `<SkeletonWrapper>` | generates skeleton, adds `fallback` prop |
 | **CSR** | non-async component inside `<SkeletonWrapper>` | generates skeleton, adds `fallback` prop |
@@ -119,7 +119,7 @@ skeletal detects and wires four patterns automatically.
 Wrap your component in `<SkeletonWrapper>`:
 
 ```tsx
-import { SkeletonWrapper } from 'skeletal'
+import { SkeletonWrapper } from 'skeletal-ui'
 import { UserCard } from './UserCard'
 
 export default function Page() {
@@ -131,10 +131,10 @@ export default function Page() {
 }
 ```
 
-After `skeletal analyze`, the wrapper is patched with the generated skeleton:
+After `skeletal-ui analyze`, the wrapper is patched with the generated skeleton:
 
 ```tsx
-// auto-wired by skeletal
+// auto-wired by skeletal-ui
 import { UserCardSkeleton } from './UserCard.skeleton'
 
 <SkeletonWrapper fallback={<UserCardSkeleton />}>
@@ -142,21 +142,22 @@ import { UserCardSkeleton } from './UserCard.skeleton'
 </SkeletonWrapper>
 ```
 
-`UserCard.skeleton.tsx` is generated alongside `UserCard.tsx`:
+`UserCard.skeleton.tsx` is generated alongside `UserCard.tsx`. Sizes come from Playwright's computed styles — bar heights match the font-size, outer heights match the line-height, so the layout takes up identical space whether loaded or not:
 
 ```tsx
 // UserCard.skeleton.tsx — auto-generated, safe to edit after ejecting
-'use client'
 // skeletal:hash:a1b2c3d4
-import { Sk } from 'skeletal'
+// skeletal:pattern:rsc
+'use client'
+import { Sk } from 'skeletal-ui'
 
 export function UserCardSkeleton() {
   return (
     <div className="user-card">
       <Sk.Avatar size={64} />
       <div className="user-card__body">
-        <Sk.Heading width="55%" />
-        <Sk.Text lines={2} />
+        <Sk.Heading height="22px" width="55%" />
+        <Sk.Text lines={2} height="14px" gap="12px" width="80%" />
       </div>
       <Sk.Button width={80} height={32} />
     </div>
@@ -170,11 +171,12 @@ export { UserCardSkeleton as skeleton }
 
 ### CSR — client components
 
-Same pattern as RSC. skeletal detects whether the component function is `async` or not — non-async components get the `csr` pattern, which skips the Playwright `networkidle` wait (no server data to await).
+Same pattern as RSC. skeletal-ui detects whether the component function is `async` or not — non-async components get the `csr` pattern, which skips the Playwright `networkidle` wait (no server data to await). Use the `loading` prop to control skeleton display explicitly:
 
 ```tsx
 'use client'
 import { useState, useEffect } from 'react'
+import { SkeletonWrapper } from 'skeletal-ui'
 
 export function ProfileCard({ username }: { username: string }) {
   const [stats, setStats] = useState(null)
@@ -185,9 +187,12 @@ export function ProfileCard({ username }: { username: string }) {
 
   // ...
 }
-```
 
-Wrap it in `<SkeletonWrapper>` exactly like RSC — no other change needed.
+// Wrap with loading prop for explicit CSR control
+<SkeletonWrapper loading={!stats} fallback={<ProfileCardSkeleton />}>
+  <ProfileCard username="alex" />
+</SkeletonWrapper>
+```
 
 ---
 
@@ -198,8 +203,8 @@ Wrap it in `<SkeletonWrapper>` exactly like RSC — no other change needed.
 import React from 'react'
 const HeavyChart = React.lazy(() => import('./HeavyChart'))
 
-// After — auto-applied by `skeletal analyze`
-import { lazyWithSkeleton } from 'skeletal'
+// After — auto-applied by `skeletal-ui analyze`
+import { lazyWithSkeleton } from 'skeletal-ui'
 const HeavyChart = lazyWithSkeleton(() => import('./HeavyChart'))
 ```
 
@@ -214,14 +219,14 @@ const HeavyChart = lazyWithSkeleton(() => import('./HeavyChart'))
 import dynamic from 'next/dynamic'
 const Map = dynamic(() => import('./MapComponent'), { ssr: false })
 
-// After — auto-applied by `skeletal analyze`
-import { dynamicWithSkeleton } from 'skeletal/next'
+// After — auto-applied by `skeletal-ui analyze`
+import { dynamicWithSkeleton } from 'skeletal-ui/next'
 const Map = dynamicWithSkeleton(() => import('./MapComponent'), { ssr: false })
 ```
 
 `dynamicWithSkeleton` is a drop-in replacement for `next/dynamic` with the same options API.
 
-> **Important:** `skeletal/next` is safe to import in page files. The build-time Next.js transform lives at `skeletal/next-transform` (for `next.config.mjs` only).
+> **Important:** `skeletal-ui/next` is safe to import in page files. The build-time Next.js transform lives at `skeletal-ui/next-transform` (for `next.config.mjs` only).
 
 ---
 
@@ -230,44 +235,51 @@ const Map = dynamicWithSkeleton(() => import('./MapComponent'), { ssr: false })
 Import and use anywhere in your skeleton files:
 
 ```tsx
-import { Sk } from 'skeletal'
+import { Sk } from 'skeletal-ui'
 ```
 
 All primitives are CSS-only (no JavaScript animation), server-safe, and zero-dependency. They render `aria-hidden="true"` spans so screen readers skip them.
 
 ### Sk.Text
 
-Multi-line text block with a shorter last line.
+Multi-line text block with a shorter last line. When generated by `skeletal-ui analyze`, `height` is set to the element's computed `font-size` and `lineHeight` is set to the element's computed `line-height`, so each bar looks visually natural while the element takes up exactly the same space as real text.
 
 ```tsx
-<Sk.Text />                          // single line, full width
-<Sk.Text lines={3} />                // 3 lines
+<Sk.Text />                                    // single line, full width
+<Sk.Text lines={3} />                          // 3 lines
 <Sk.Text lines={3} lastLineWidth="40%" />
 <Sk.Text width="80%" />
+<Sk.Text height="14px" lineHeight="20px" />    // precise sizing (auto-generated)
+<Sk.Text lines={3} height="14px" gap="6px" />  // multi-line with exact gap
 ```
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `lines` | `number` | `1` | Number of text lines |
 | `width` | `string` | `'100%'` | Width of all lines except last |
-| `lastLineWidth` | `string` | `'60%'` | Width of the last line |
-| `className` | `string` | — | Extra CSS class |
+| `lastLineWidth` | `string` | `'60%'` | Width of the last line (multi-line only) |
+| `height` | `string` | `'1em'` | Height of each bar (set to `font-size` by analyzer) |
+| `lineHeight` | `string` | — | Outer container height for single-line (set to computed `line-height` by analyzer for layout stability) |
+| `gap` | `string` | `'0.4em'` | Gap between bars (multi-line only; set by analyzer so total height matches bounding box) |
+| `className` | `string` | — | Applied to outer wrapper; use for margin/spacing classes |
 
 ---
 
 ### Sk.Heading
 
-Single-line heading block, slightly taller than `Sk.Text`.
+Single-line heading block. When generated, `height` is set to the element's actual bounding-box height — so multi-line headings (h3 that wraps) are correctly represented as a single taller block.
 
 ```tsx
 <Sk.Heading />
 <Sk.Heading width="50%" />
+<Sk.Heading height="42px" width="88%" />  // auto-generated: exact bounding box height
 ```
 
-| Prop | Type | Default |
-|---|---|---|
-| `width` | `string` | `'70%'` |
-| `className` | `string` | — |
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `width` | `string` | `'70%'` | Width of the block |
+| `height` | `string` | `'1.4em'` | Height of the block (overridden by analyzer with exact bounding box height) |
+| `className` | `string` | — | Extra CSS class |
 
 ---
 
@@ -291,11 +303,12 @@ Circular or square avatar placeholder.
 
 ### Sk.Image
 
-Rectangular image placeholder with aspect ratio support.
+Rectangular image placeholder with aspect ratio support. Also used for `aspect-*` container divs detected during analysis.
 
 ```tsx
 <Sk.Image />                          // 16/9, full width
 <Sk.Image aspectRatio="4/3" />
+<Sk.Image aspectRatio="16/9" width="100%" />  // auto-generated for aspect-video divs
 <Sk.Image width={300} height={200} />
 ```
 
@@ -336,7 +349,7 @@ Small inline badge/tag placeholder.
 
 | Prop | Type | Default |
 |---|---|---|
-| `width` | `string \| number` | `48` |
+| `width` | `number` | `60` |
 | `height` | `number` | `20` |
 | `className` | `string` | — |
 
@@ -344,18 +357,20 @@ Small inline badge/tag placeholder.
 
 ### Sk.Number
 
-Single-line numeric value placeholder, narrower than `Sk.Text`.
+Single-line numeric value placeholder. When generated, `height` is set to the element's `font-size` (visual bar) and `outerHeight` to the full bounding-box height (layout stability).
 
 ```tsx
 <Sk.Number />
 <Sk.Number width={60} />
+<Sk.Number width={28} height="16px" outerHeight="24px" />  // auto-generated
 ```
 
-| Prop | Type | Default |
-|---|---|---|
-| `width` | `string \| number` | `48` |
-| `height` | `number` | `24` |
-| `className` | `string` | — |
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `width` | `number` | `80` | Width of the bar |
+| `height` | `number \| string` | `'1em'` | Visual bar height (set to `font-size` by analyzer) |
+| `outerHeight` | `string` | — | Outer container height for layout stability (set to bounding-box height by analyzer) |
+| `className` | `string` | — | Extra CSS class |
 
 ---
 
@@ -370,7 +385,7 @@ Square icon placeholder.
 
 | Prop | Type | Default |
 |---|---|---|
-| `size` | `number` | `20` |
+| `size` | `number` | `24` |
 | `className` | `string` | — |
 
 ---
@@ -427,10 +442,15 @@ Block container with optional padding and composable children.
 `SkeletonWrapper` is a client component that combines `Suspense` and `ErrorBoundary`. It shows a skeleton while its children suspend and falls back to the skeleton on error.
 
 ```tsx
-import { SkeletonWrapper } from 'skeletal'
+import { SkeletonWrapper } from 'skeletal-ui'
 
 // Explicit fallback (required for Server Components in Next.js App Router)
 <SkeletonWrapper fallback={<UserCardSkeleton />}>
+  <UserCard />
+</SkeletonWrapper>
+
+// CSR — explicit loading control
+<SkeletonWrapper loading={!data} fallback={<UserCardSkeleton />}>
   <UserCard />
 </SkeletonWrapper>
 
@@ -449,6 +469,7 @@ import { SkeletonWrapper } from 'skeletal'
 |---|---|---|---|
 | `children` | `ReactNode` | required | The component to render |
 | `fallback` | `ReactNode` | — | Skeleton to show while loading |
+| `loading` | `boolean` | — | Force skeleton display (CSR pattern — controls visibility without Suspense) |
 
 ---
 
@@ -457,7 +478,7 @@ import { SkeletonWrapper } from 'skeletal'
 Override the default shimmer theme for a subtree using CSS custom properties.
 
 ```tsx
-import { SkeletonProvider } from 'skeletal'
+import { SkeletonProvider } from 'skeletal-ui'
 
 <SkeletonProvider color="#e0e0e0" highlight="#f5f5f5" radius={8} duration={1.2}>
   <Dashboard />
@@ -488,27 +509,27 @@ You can also override these variables globally in your own CSS:
 ## CLI reference
 
 ```
-skeletal init
+skeletal-ui init
 ```
 Interactive setup. Creates `skeletal.config.ts`, walks through dev server URL and route selection, and prints the next steps including the Playwright install command.
 
 ---
 
 ```
-skeletal analyze [options]
+skeletal-ui analyze [options]
 ```
-The main command. Scans source files, crawls routes with Playwright, generates `.skeleton.tsx` files, and wires them into your source.
+The main command. Scans source files, crawls routes with Playwright (extracting bounding box, font-size, line-height, border-radius, and aspect-ratio for every element), generates `.skeleton.tsx` files, and wires them into your source.
 
 | Flag | Description |
 |---|---|
-| `--no-browser` | Skip Playwright crawl. Generates minimal placeholder skeletons immediately. |
+| `--no-browser` | Skip Playwright crawl. Uses AST classification only — generates structural skeletons without pixel-accurate sizing. |
 | `--dry-run` | Print what would change without writing any files. |
 | `--only <Name>` | Limit to a single component by name. |
 
 ---
 
 ```
-skeletal check [options]
+skeletal-ui check [options]
 ```
 Asserts that all skeleton files are up to date. Exits with code `1` if any skeleton is stale or missing. Use in CI to prevent skeleton drift.
 
@@ -519,23 +540,23 @@ Asserts that all skeleton files are up to date. Exits with code `1` if any skele
 ---
 
 ```
-skeletal watch
+skeletal-ui watch
 ```
 Watches for changes to component source files and re-runs `analyze` automatically.
 
 ---
 
 ```
-skeletal preview
+skeletal-ui preview
 ```
 Starts a local server that renders all generated skeletons side-by-side for visual review.
 
 ---
 
 ```
-skeletal eject <Name>
+skeletal-ui eject <Name>
 ```
-Copies a generated `.skeleton.tsx` from the skeletal cache into your source tree so you can edit it freely. Ejected files are marked with `skeletal:ejected` in their header and are never overwritten by future `analyze` runs.
+Copies a generated `.skeleton.tsx` into your source tree so you can edit it freely. Ejected files are marked with `skeletal:ejected` in their header and are never overwritten by future `analyze` runs.
 
 ---
 
@@ -543,7 +564,7 @@ Copies a generated `.skeleton.tsx` from the skeletal cache into your source tree
 
 ```ts
 // skeletal.config.ts
-import { defineConfig } from 'skeletal'
+import { defineConfig } from 'skeletal-ui'
 
 export default defineConfig({
   // Required
@@ -608,19 +629,19 @@ routes: [
 
 ### Next.js
 
-`skeletal/next` exports `dynamicWithSkeleton` — safe to import in any page or component file:
+`skeletal-ui/next` exports `dynamicWithSkeleton` — safe to import in any page or component file:
 
 ```tsx
-import { dynamicWithSkeleton } from 'skeletal/next'
+import { dynamicWithSkeleton } from 'skeletal-ui/next'
 
 const Map = dynamicWithSkeleton(() => import('./Map'), { ssr: false })
 ```
 
-The build-time marker transform (`skeletal/next-transform`) is for `next.config.mjs` only. It injects `data-sk` attributes during the Playwright crawl phase:
+The build-time marker transform (`skeletal-ui/next-transform`) is for `next.config.mjs` only. It injects `data-sk` attributes during the Playwright crawl phase:
 
 ```js
 // next.config.mjs
-import { skeletalNextTransform } from 'skeletal/next-transform'
+import { skeletalNextTransform } from 'skeletal-ui/next-transform'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -650,7 +671,7 @@ SKELETAL_ANALYZE=1 next dev
 // vite.config.ts
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { skeletalVitePlugin } from 'skeletal/vite'
+import { skeletalVitePlugin } from 'skeletal-ui/vite'
 
 export default defineConfig({
   plugins: [
@@ -666,18 +687,18 @@ The Vite plugin activates only when `SKELETAL_ANALYZE=1` is set, so it has zero 
 
 ## CI integration
 
-Add `skeletal check` to your CI pipeline to fail the build whenever skeletons drift from the source:
+Add `skeletal-ui check` to your CI pipeline to fail the build whenever skeletons drift from the source:
 
 ```yaml
 # .github/workflows/check.yml
 - name: Check skeletons
-  run: npx skeletal check
+  run: npx skeletal-ui check
 ```
 
 With JSON output for custom reporting:
 
 ```sh
-skeletal check --json
+skeletal-ui check --json
 # {
 #   "stale": [
 #     { "name": "UserCard", "reason": "hash changed", "file": "src/components/UserCard.skeleton.tsx" }
@@ -693,7 +714,7 @@ Staleness is detected via an AST hash stored in each skeleton file's header comm
 // skeletal:hash:a1b2c3d4
 ```
 
-When the component's JSX structure changes, the hash changes, and `skeletal check` reports the skeleton as stale.
+When the component's JSX structure changes, the hash changes, and `skeletal-ui check` reports the skeleton as stale.
 
 ---
 
@@ -706,7 +727,7 @@ When the component's JSX structure changes, the hash changes, and `skeletal chec
 | React | `>= 18` |
 | `@playwright/test` | `>= 1.44` _(optional — browser crawl only)_ |
 
-skeletal is **TypeScript-only**. JavaScript projects are not supported.
+skeletal-ui is **TypeScript-only**. JavaScript projects are not supported.
 
 ---
 

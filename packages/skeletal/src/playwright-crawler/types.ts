@@ -15,6 +15,8 @@ export interface ExtractedChildGeometry {
   computedStyles: {
     borderRadius: string
     aspectRatio: string
+    fontSize: string
+    lineHeight: string
   }
   children: ExtractedChildGeometry[]
 }
