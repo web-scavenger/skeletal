@@ -1,5 +1,5 @@
 import { Project, SyntaxKind } from 'ts-morph'
-import type { Node, SourceFile } from 'ts-morph'
+import type { Node, SourceFile, ObjectLiteralExpression } from 'ts-morph'
 import type { ExtractedChildGeometry, ExtractedGeometry } from '../playwright-crawler/types.js'
 
 // --- Class filtering ---
@@ -171,8 +171,8 @@ function resolveArrayLength(sf: SourceFile, dotPath: string): number | undefined
   for (let i = 1; i < parts.length; i++) {
     const part = parts[i]
     if (!part || current?.getKind() !== SyntaxKind.ObjectLiteralExpression) break
-    const objLit: import('ts-morph').ObjectLiteralExpression = current.asKind(SyntaxKind.ObjectLiteralExpression)!
-    const prop: import('ts-morph').ObjectLiteralElementLike | undefined = objLit.getProperty(part)
+    const objLit: ObjectLiteralExpression = current.asKind(SyntaxKind.ObjectLiteralExpression)!
+    const prop = objLit.getProperty(part)
     current = prop?.asKind(SyntaxKind.PropertyAssignment)?.getInitializer()
     if (current?.getKind() === SyntaxKind.AsExpression) {
       current = current.asKind(SyntaxKind.AsExpression)!.getExpression()
@@ -353,7 +353,6 @@ function walkExpr(expr: Node, sf: SourceFile, depth: number): string {
 // Mutable index shared by sibling-level walkers
 interface GeoRef { i: number }
 
-const LINE_HEIGHT_PX = 20 // approximate for text-sm/text-base
 
 function pct(px: number, parentPx: number): string {
   if (parentPx <= 0) return '100%'
