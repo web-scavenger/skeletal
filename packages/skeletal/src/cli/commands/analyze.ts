@@ -213,11 +213,11 @@ async function generateMinimalSkeletons(
     const genResult = astBody !== null
       ? generateSkeletonFromBody(candidate, astBody, outputPath, logger)
       : generateSkeleton(candidate, [{
-          primitiveType: 'Card' as const,
-          props: { width: '100%', height: 200 },
-          relativeWidth: '100%',
-          children: [],
-        }], outputPath, logger)
+        primitiveType: 'Card' as const,
+        props: { width: '100%', height: 200 },
+        relativeWidth: '100%',
+        children: [],
+      }], outputPath, logger)
 
     if (genResult.isErr()) {
       logger.error(`Codegen failed for ${candidate.name}`)

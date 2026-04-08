@@ -145,7 +145,7 @@ const patterns = [
     id: 'dynamic',
     title: 'next/dynamic()',
     description:
-      "Drop-in replacement for Next.js dynamic imports. Uses the module's skeleton() export as the loading state — no loading: () => <Spinner /> required.",
+      'Drop-in replacement for Next.js dynamic imports. Uses the module\'s skeleton() export as the loading state — no loading: () => <Spinner /> required.',
     code: DYNAMIC_CODE,
   },
 ] as const

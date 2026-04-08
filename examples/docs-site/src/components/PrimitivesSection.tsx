@@ -73,33 +73,33 @@ export function PrimitivesSection() {
 
 function PrimitivePreview({ name }: { name: string }) {
   switch (name) {
-    case 'Sk.Text':
-      return <span className="sk-base h-3 w-24" />
-    case 'Sk.Heading':
-      return <span className="sk-base h-5 w-28" />
-    case 'Sk.Avatar':
-      return <span className="sk-base w-8 h-8 rounded-full" />
-    case 'Sk.Image':
-      return <span className="sk-base block w-24 h-14" />
-    case 'Sk.Card':
-      return <span className="sk-base block w-24 h-12 rounded-lg" />
-    case 'Sk.List':
-      return (
-        <div className="flex flex-col gap-1.5">
-          {[0, 1, 2].map(i => (
-            <span key={i} className="sk-base h-2.5 w-20" />
-          ))}
-        </div>
-      )
-    case 'Sk.Badge':
-      return <span className="sk-base h-5 w-12 rounded-full" />
-    case 'Sk.Button':
-      return <span className="sk-base block h-8 w-20 rounded-md" />
-    case 'Sk.Icon':
-      return <span className="sk-base w-6 h-6" />
-    case 'Sk.Number':
-      return <span className="sk-base h-6 w-14" />
-    default:
-      return <span className="sk-base h-4 w-20" />
+  case 'Sk.Text':
+    return <span className="sk-base h-3 w-24" />
+  case 'Sk.Heading':
+    return <span className="sk-base h-5 w-28" />
+  case 'Sk.Avatar':
+    return <span className="sk-base w-8 h-8 rounded-full" />
+  case 'Sk.Image':
+    return <span className="sk-base block w-24 h-14" />
+  case 'Sk.Card':
+    return <span className="sk-base block w-24 h-12 rounded-lg" />
+  case 'Sk.List':
+    return (
+      <div className="flex flex-col gap-1.5">
+        {[0, 1, 2].map(i => (
+          <span key={i} className="sk-base h-2.5 w-20" />
+        ))}
+      </div>
+    )
+  case 'Sk.Badge':
+    return <span className="sk-base h-5 w-12 rounded-full" />
+  case 'Sk.Button':
+    return <span className="sk-base block h-8 w-20 rounded-md" />
+  case 'Sk.Icon':
+    return <span className="sk-base w-6 h-6" />
+  case 'Sk.Number':
+    return <span className="sk-base h-6 w-14" />
+  default:
+    return <span className="sk-base h-4 w-20" />
   }
 }

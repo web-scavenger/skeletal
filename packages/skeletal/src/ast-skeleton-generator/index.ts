@@ -351,7 +351,7 @@ function walkExpr(expr: Node, sf: SourceFile, depth: number): string {
 // --- Geometry-aware walk ---
 
 // Mutable index shared by sibling-level walkers
-type GeoRef = { i: number }
+interface GeoRef { i: number }
 
 const LINE_HEIGHT_PX = 20 // approximate for text-sm/text-base
 
