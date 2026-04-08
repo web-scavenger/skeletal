@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build skeletal-ui
+        run: pnpm --filter skeletal-ui build
+
       - name: Build docs
         run: pnpm --filter docs-site build
         env:
