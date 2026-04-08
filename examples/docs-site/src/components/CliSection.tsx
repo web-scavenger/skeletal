@@ -2,7 +2,7 @@ const commands = [
   {
     name: 'init',
     args: '',
-    desc: 'Validate config, check Playwright install, run a test crawl',
+    desc: 'Interactive setup — creates skeletal.config.ts, walks through dev server URL and route selection',
   },
   {
     name: 'analyze',

@@ -7,6 +7,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.5.0] — 2026-04-08
+
+### Fixed
+
+- **`Sk.Text` invisible in `align-items: center` flex containers**: `lineHeight` path now places `width` on the outer `<span>` instead of the inner bar. Previously `width: "100%"` on the inner bar created a circular CSS reference when the parent had no explicit cross-size (`flex-col items-center`, `flex items-center`), causing the element to render at 0px. Affects stat labels, footer metadata rows, and any text inside a centering flex container.
+- **`<img>` with `rounded-full` generated as `Sk.Image` instead of `Sk.Avatar`**: `classifyLeafWithGeo` now checks `isCircularGeo` for `img` tags. Profile photos and small avatar images (e.g. `<img className="w-6 h-6 rounded-full">`) are correctly emitted as `Sk.Avatar`.
+- **Gradient hero/banner divs generated as empty or wrong element**: `classifyNodeWithGeo` now detects `bg-gradient-*` divs taller than 40px and emits `Sk.Image` with the measured height. AST-only path (`classifyNode`) handles the same case via the `h-{n}` Tailwind class. Previously these containers produced empty output or descended into their decorative children.
+- **Purely visual child containers (e.g. chart bars) silently dropped**: when all children of a container produce no skeleton output but the DOM has children and the element is larger than 20×20px, the container is now emitted as `Sk.Card` instead of being omitted. Preserves layout space for decorative elements.
+- **`dynamicWithSkeleton` — `require is not defined` in browser bundles**: replaced `require('next/dynamic')` with a static ESM `import` and `@ts-ignore`. The previous dynamic `require()` call failed in browser ESM environments.
+
+### Changed
+
+- **AST generator — single-line text width uses pixels**: `classifyLeafWithGeo` now emits absolute pixel widths (e.g. `width="68px"`) for single-line `Sk.Text` instead of percentages. Percentage widths resolve to zero when the flex parent has no explicit width (intrinsic-width `flex items-center` containers). Multi-line text retains percentage widths as it is always inside block/stretch containers.
+
+### Added
+
+- **`package.json` — `homepage`, `repository`, `bugs`**: npm package page now links to the live demo (`https://web-scavenger.github.io/skeletal/`) and the GitHub repository.
+
+---
+
 ## [0.2.0] — 2026-04-08
 
 ### Added
@@ -60,5 +80,6 @@ Initial release.
 - AST hash staleness detection (`skeletal:hash` header comment).
 - `skeletal.config.ts` with `defineConfig()` and Zod schema validation.
 
+[0.5.0]: https://github.com/web-scavenger/skeletal/compare/v0.2.0...v0.5.0
 [0.2.0]: https://github.com/web-scavenger/skeletal/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/web-scavenger/skeletal/releases/tag/v0.1.0

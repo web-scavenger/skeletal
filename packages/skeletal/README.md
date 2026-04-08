@@ -4,6 +4,8 @@
 
 skeletal-ui scans your codebase, crawls your running app with Playwright to capture real element geometry (bounding box, border-radius, font-size, line-height), and generates pixel-accurate `.skeleton.tsx` files — no manual shimmer code, no copy-pasting CSS, no drift from the real UI.
 
+**[Live demo →](https://web-scavenger.github.io/skeletal/)**
+
 ```sh
 npx skeletal-ui analyze
 ```
