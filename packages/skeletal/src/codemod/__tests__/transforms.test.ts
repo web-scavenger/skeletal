@@ -23,7 +23,7 @@ describe('applyWrapWithSkeletonWrapper', () => {
   it('adds skeleton import and fallback prop to SkeletonWrapper', () => {
     const project = new Project({ useInMemoryFileSystem: true })
     project.createSourceFile('/src/app/page.tsx', `
-import { SkeletonWrapper } from 'skeletal'
+import { SkeletonWrapper } from 'skeletal-ui'
 import { UserCard } from '../components/UserCard'
 
 export default function Page() {
@@ -53,7 +53,7 @@ export default function Page() {
   it('is idempotent when fallback prop already present', () => {
     const project = new Project({ useInMemoryFileSystem: true })
     project.createSourceFile('/src/app/page.tsx', `
-import { SkeletonWrapper } from 'skeletal'
+import { SkeletonWrapper } from 'skeletal-ui'
 import { UserCard } from '../components/UserCard'
 import { UserCardSkeleton } from '../components/UserCard.skeleton'
 
@@ -100,7 +100,7 @@ const HeavyChart = React.lazy(() => import('./HeavyChart'))
   it('is idempotent when already applied', () => {
     const project = new Project({ useInMemoryFileSystem: true })
     project.createSourceFile('/src/app/page.tsx', `
-import { lazyWithSkeleton } from 'skeletal'
+import { lazyWithSkeleton } from 'skeletal-ui'
 const HeavyChart = lazyWithSkeleton(() => import('./HeavyChart'))
 `)
     const candidate = createCandidate()

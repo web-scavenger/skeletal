@@ -1,12 +1,14 @@
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import * as clack from '@clack/prompts'
 import { loadConfig } from '../../config/loader.js'
 import { scanCandidates } from '../../ast-scanner/scanner.js'
 import { crawlRoutes } from '../../playwright-crawler/crawler.js'
 import { classify } from '../../classifier/classifier.js'
-import { generateSkeleton } from '../../codegen/generator.js'
+import { generateSkeleton, generateSkeletonFromBody } from '../../codegen/generator.js'
 import { applyCodemod } from '../../codemod/apply.js'
+import { injectDataSk } from '../../marker-injector/transform.js'
+import { generateSkeletonBodyFromSource, generateSkeletonBodyWithGeometry } from '../../ast-skeleton-generator/index.js'
 import { createLogger } from '../../logger.js'
 import { Project } from 'ts-morph'
 import type { SkeletalCandidate } from '../../ast-scanner/types.js'
@@ -73,9 +75,41 @@ export async function runAnalyze(options: {
     return
   }
 
+  // Inject data-sk markers into source files before crawling
+  const originalSources = new Map<string, string>()
+  const sourceFilePaths = [...new Set(candidates.map(c => c.sourceFile))]
+  for (const filePath of sourceFilePaths) {
+    try {
+      const original = readFileSync(filePath, 'utf-8')
+      const modified = injectDataSk(original, filePath, candidates)
+      if (modified !== original) {
+        originalSources.set(filePath, original)
+        writeFileSync(filePath, modified, 'utf-8')
+        logger.debug(`Injected data-sk into ${filePath}`)
+      }
+    } catch {
+      // Non-fatal: skip injection for this file
+    }
+  }
+
+  // Allow dev server HMR to process the file changes
+  if (originalSources.size > 0) {
+    await new Promise<void>(resolve => setTimeout(resolve, 2000))
+  }
+
   // Crawl with Playwright
   s.start('Crawling routes with Playwright...')
   const crawlResult = await crawlRoutes(config, candidates, logger)
+
+  // Restore original source files regardless of crawl outcome
+  for (const [filePath, original] of originalSources) {
+    try {
+      writeFileSync(filePath, original, 'utf-8')
+    } catch {
+      logger.warn(`Could not restore ${filePath}`)
+    }
+  }
+
   if (crawlResult.isErr()) {
     s.stop('Crawl failed')
     clack.log.error(crawlResult.error.message)
@@ -107,10 +141,13 @@ export async function runAnalyze(options: {
       continue
     }
 
-    const tree = classify(geometry)
     const outputPath = candidate.sourceFile.replace(/\.(js|tsx?|jsx?)$/, '') + '.skeleton.tsx'
 
-    const genResult = generateSkeleton(candidate, tree, outputPath, logger)
+    // AST structure + Playwright geometry for real sizes
+    const astBody = generateSkeletonBodyWithGeometry(candidate.sourceFile, candidate.name, geometry)
+    const genResult = astBody !== null
+      ? generateSkeletonFromBody(candidate, astBody, outputPath, logger)
+      : generateSkeleton(candidate, classify(geometry), outputPath, logger)
     if (genResult.isErr()) {
       logger.error(`Codegen failed for ${candidate.name}: ${genResult.error.message}`)
       failed++
@@ -169,14 +206,18 @@ async function generateMinimalSkeletons(
   })
 
   for (const candidate of candidates) {
-    const minimalTree = [{
-      primitiveType: 'Card' as const,
-      props: { width: '100%', height: 200 },
-      relativeWidth: '100%',
-      children: [],
-    }]
     const outputPath = candidate.sourceFile.replace(/\.(js|tsx?|jsx?)$/, '') + '.skeleton.tsx'
-    const genResult = generateSkeleton(candidate, minimalTree, outputPath, logger)
+
+    // Try AST-based generation first; fall back to minimal card
+    const astBody = generateSkeletonBodyFromSource(candidate.sourceFile, candidate.name)
+    const genResult = astBody !== null
+      ? generateSkeletonFromBody(candidate, astBody, outputPath, logger)
+      : generateSkeleton(candidate, [{
+        primitiveType: 'Card' as const,
+        props: { width: '100%', height: 200 },
+        relativeWidth: '100%',
+        children: [],
+      }], outputPath, logger)
 
     if (genResult.isErr()) {
       logger.error(`Codegen failed for ${candidate.name}`)

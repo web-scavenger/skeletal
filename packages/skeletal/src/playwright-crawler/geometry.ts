@@ -26,6 +26,8 @@ export function extractChildGeometryScript(): string {
         computedStyles: {
           borderRadius: styles.borderRadius,
           aspectRatio: styles.aspectRatio,
+          fontSize: styles.fontSize,
+          lineHeight: styles.lineHeight,
         },
         children: extractChildren(child, depth + 1),
       }
@@ -57,6 +59,8 @@ export function normalizeChildGeometry(raw: unknown): ExtractedChildGeometry[] {
       computedStyles: {
         borderRadius: String(((r['computedStyles'] as Record<string, unknown>)?.['borderRadius']) ?? ''),
         aspectRatio: String(((r['computedStyles'] as Record<string, unknown>)?.['aspectRatio']) ?? ''),
+        fontSize: String(((r['computedStyles'] as Record<string, unknown>)?.['fontSize']) ?? ''),
+        lineHeight: String(((r['computedStyles'] as Record<string, unknown>)?.['lineHeight']) ?? ''),
       },
       children: normalizeChildGeometry(r['children']),
     }
