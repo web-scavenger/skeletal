@@ -60,5 +60,5 @@ Initial release.
 - AST hash staleness detection (`skeletal:hash` header comment).
 - `skeletal.config.ts` with `defineConfig()` and Zod schema validation.
 
-[0.2.0]: https://github.com/your-org/skeletal/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/your-org/skeletal/releases/tag/v0.1.0
+[0.2.0]: https://github.com/web-scavenger/skeletal/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/web-scavenger/skeletal/releases/tag/v0.1.0

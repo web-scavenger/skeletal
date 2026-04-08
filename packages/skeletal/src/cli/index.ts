@@ -12,7 +12,7 @@ const projectRoot = process.cwd()
 const program = new Command()
   .name('skeletal-ui')
   .description('Automate skeleton loading screens for React/Next.js TypeScript projects')
-  .version('0.1.0')
+  .version('0.2.0')
 
 program
   .command('init')
