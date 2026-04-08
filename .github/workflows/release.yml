@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/skeletal/package.json'
+
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: version
+        run: |
+          PREV=$(git show HEAD~1:packages/skeletal/package.json | node -pe "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version" 2>/dev/null || echo "0.0.0")
+          CURR=$(node -pe "require('./packages/skeletal/package.json').version")
+          echo "previous=$PREV" >> $GITHUB_OUTPUT
+          echo "current=$CURR" >> $GITHUB_OUTPUT
+          if [ "$PREV" != "$CURR" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.version.outputs.changed == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.version.outputs.changed == 'true'
+        with:
+          node-version: ${{ vars.NODE_VERSION || '20' }}
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        if: steps.version.outputs.changed == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        if: steps.version.outputs.changed == 'true'
+        run: pnpm --filter skeletal-ui build
+
+      - name: Publish to npm
+        if: steps.version.outputs.changed == 'true'
+        run: pnpm publish --filter skeletal-ui --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
