@@ -12,6 +12,9 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    environment: dev
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,8 +54,4 @@ jobs:
       - name: Publish to npm
         if: steps.version.outputs.changed == 'true'
         working-directory: packages/skeletal
-        run: |
-          pnpm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
-          pnpm publish --no-git-checks --access public
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
