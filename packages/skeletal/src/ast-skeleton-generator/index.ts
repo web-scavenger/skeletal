@@ -259,6 +259,15 @@ function classifyNode(
     return `${i}<Sk.Image aspectRatio="${ar}" width="100%" />`
   }
 
+  // Gradient hero/banner block with a fixed Tailwind height (AST-only path)
+  if (classes.includes('bg-gradient-') && tag === 'div') {
+    const hMatch = classes.match(/\bh-(\d+)\b/)
+    if (hMatch?.[1]) {
+      const heightPx = parseInt(hMatch[1]) * 4
+      return `${i}<Sk.Image width="100%" height={${heightPx}} />`
+    }
+  }
+
   if (isTextTag(tag) && hasOnlyInlineChildren(children)) {
     if (isNumberLike(tag, classes)) return `${i}<Sk.Number />`
     const spacing = extractSpacingClasses(classes)
@@ -384,7 +393,14 @@ function classifyLeafWithGeo(
   const w = geo.boundingBox.width
   const h = geo.boundingBox.height
 
-  if (tag === 'img') return `${i}<Sk.Image />`
+  if (tag === 'img') {
+    // Round avatar images (e.g. <img className="w-6 h-6 rounded-full">) → Sk.Avatar
+    if (isCircularGeo(geo) || isAvatarDiv(tag, classes)) {
+      const size = Math.round(Math.min(w, h))
+      return `${i}<Sk.Avatar size={${size}} />`
+    }
+    return `${i}<Sk.Image />`
+  }
   if (tag === 'button') return `${i}<Sk.Button />`
   if (isHeadingTag(tag)) {
     return h > 0
@@ -418,14 +434,19 @@ function classifyLeafWithGeo(
     const lines = Math.max(1, Math.round(h / lineHeightPx))
     const barHeightPx = Math.round(fontSizePx)
     const heightStr = `${barHeightPx}px`
-    const widthStr = pct(w, parentWidth)
     const spacing = extractSpacingClasses(classes)
     const clsAttr = spacing ? ` className="${spacing}"` : ''
     if (lines > 1) {
+      // Multi-line: percentage width works because these are always in block/stretch containers.
+      const widthStr = pct(w, parentWidth)
       // gap computed so total skeleton height = measured bounding box h
       const gapPx = Math.max(0, Math.round((h - lines * barHeightPx) / (lines - 1)))
       return `${i}<Sk.Text${clsAttr} lines={${lines}} height="${heightStr}" gap="${gapPx}px" width="${widthStr}" />`
     }
+    // Single-line: use pixel width so the value is self-contained.
+    // Percentage widths cause circular sizing when the flex parent has no explicit width
+    // (e.g. flex items-center gap-2 shrinks to content, so 66% of intrinsic width → 0).
+    const widthStr = `${Math.round(w)}px`
     // lineHeight = bounding box (layout stability), height = fontSize (visual accuracy)
     const lineHeightStr = `${Math.round(lineHeightPx)}px`
     return `${i}<Sk.Text${clsAttr} height="${heightStr}" lineHeight="${lineHeightStr}" width="${widthStr}" />`
@@ -553,6 +574,12 @@ function classifyNodeWithGeo(
     return `${i}<Sk.Image aspectRatio="${ar}" width="100%" />`
   }
 
+  // Gradient hero/banner blocks (e.g. bg-gradient-to-br decorative headers) → Sk.Image
+  // Uses the measured height rather than guessing from Tailwind classes.
+  if (classes.includes('bg-gradient-') && h > 40) {
+    return `${i}<Sk.Image width="${pct(w, parentWidth)}" height={${Math.round(h)}} />`
+  }
+
   if (isTextTag(tag) && hasOnlyInlineChildren(children)) {
     return classifyLeafWithGeo(tag, classes, geo, parentWidth, depth)
   }
@@ -566,7 +593,14 @@ function classifyNodeWithGeo(
     .map(c => walkChildWithGeo(c, sf, geo.children, childRef, w, depth + 1, thisIsFlex))
     .filter(s => s.trim())
 
-  if (childLines.length === 0) return ''
+  if (childLines.length === 0) {
+    // Children existed in the DOM but produced no skeleton output — purely visual
+    // elements (e.g. chart bars, colour blocks). Preserve the container as Sk.Card.
+    if (geo.children.length > 0 && h > 20 && w > 20) {
+      return `${i}<Sk.Card width="${pct(w, parentWidth)}" height={${Math.round(h)}} padding={0} />`
+    }
+    return ''
+  }
 
   // Root (depth=0): preserve all classes; deeper: layout only + flex-1 rule
   let outputCls: string

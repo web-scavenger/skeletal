@@ -24,15 +24,17 @@ export function Text({
     if (lineHeight) {
       // Outer wrapper matches real bounding box height (no layout jump).
       // Inner bar matches font-size (visually natural thin bar).
+      // width goes on the outer span so percentage values resolve correctly in
+      // flex containers that have align-items:center (no implicit stretch).
       return (
         <span
           className={className}
-          style={{ display: 'flex', alignItems: 'center', height: lineHeight }}
+          style={{ display: 'flex', alignItems: 'center', height: lineHeight, width }}
           aria-hidden="true"
         >
           <span
             className="sk-base"
-            style={{ display: 'block', width, height: barHeight }}
+            style={{ display: 'block', width: '100%', height: barHeight }}
           />
         </span>
       )

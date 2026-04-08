@@ -58,12 +58,17 @@ export function ProfileCard() {
   )
 }
 
-// Same SkeletonWrapper API as RSC
+// Use the loading prop for explicit CSR control
 import { SkeletonWrapper } from 'skeletal-ui'
+import { ProfileCardSkeleton } from './ProfileCard.skeleton'
 
 export default function Page() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  })
   return (
-    <SkeletonWrapper>
+    <SkeletonWrapper loading={isLoading} fallback={<ProfileCardSkeleton />}>
       <ProfileCard />
     </SkeletonWrapper>
   )

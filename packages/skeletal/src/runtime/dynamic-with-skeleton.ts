@@ -1,8 +1,10 @@
 // This module is only used in Next.js environments (skeletal/next entry point).
-// next/dynamic is resolved at runtime — we avoid a static import to keep this
-// file compilable without next installed as a peer dep of the monorepo.
 
 import type { ComponentType } from 'react'
+// next/dynamic is a peer dependency — only available in Next.js projects.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import dynamic from 'next/dynamic'
 
 interface DynamicOptions {
   ssr?: boolean
@@ -39,10 +41,8 @@ export function dynamicWithSkeleton<P = any>(
     return { default: component }
   }
 
-  // Dynamically require next/dynamic to avoid compile-time dependency
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const dynamic = (require('next/dynamic') as { default: NextDynamic }).default ?? (require('next/dynamic') as NextDynamic)
-  const DynComponent = dynamic(wrappedFactory, options)
+  const nextDynamic = (dynamic as unknown as { default?: NextDynamic }).default ?? (dynamic as unknown as NextDynamic)
+  const DynComponent = nextDynamic(wrappedFactory, options)
 
   Object.defineProperty(DynComponent, 'skeleton', {
     get() {

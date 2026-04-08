@@ -8,4 +8,5 @@ export default defineConfig({
   output: 'colocated',
   animation: 'shimmer',
   csr: { enabled: true },
+  lazy: { enabled: true },
 })
