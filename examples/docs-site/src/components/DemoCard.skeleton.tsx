@@ -16,7 +16,7 @@ export function DemoCardSkeleton() {
           <Sk.Text height="12px" lineHeight="16px" width="90px" />
         </div>
       </div>
-      <Sk.Text lines={2} height="14px" gap="18px" width="87%" />
+      <Sk.Text lines={2} height="14px" gap="18px" width="89%" />
       <div className="flex gap-6 pt-2 border-t">
         <div className="flex flex-col items-center gap-0.5">
           <Sk.Number width={28} height="16px" outerHeight="24px" />

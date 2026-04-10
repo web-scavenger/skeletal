@@ -9,17 +9,17 @@ import { Sk } from 'skeletal-ui'
 export function DemoSSRSkeleton() {
   return (
     <div className="w-full rounded-xl border border-slate-700 bg-slate-950 overflow-hidden flex flex-col">
-      <Sk.Image width="99%" height={128} />
+      <Sk.Image width="100%" height={128} />
       <div className="p-5 flex flex-col gap-3">
-        <Sk.Text height="12px" lineHeight="16px" width="284px" />
-        <Sk.Heading height="39px" width="88%" />
-        <Sk.Text lines={3} height="12px" gap="11px" width="88%" />
+        <Sk.Text height="12px" lineHeight="16px" />
+        <Sk.Heading height="19px" />
+        <Sk.Text height="12px" lineHeight="20px" />
         <div className="flex items-center gap-2 pt-1 border-t">
-          <Sk.Text height="12px" lineHeight="16px" width="65px" />
-          <Sk.Text height="12px" lineHeight="16px" width="3px" />
-          <Sk.Text height="12px" lineHeight="16px" width="60px" />
-          <Sk.Text height="12px" lineHeight="16px" width="3px" />
-          <Sk.Text height="12px" lineHeight="16px" width="67px" />
+          <Sk.Text height="12px" lineHeight="16px" />
+          <Sk.Text height="12px" lineHeight="16px" />
+          <Sk.Text height="12px" lineHeight="16px" />
+          <Sk.Text height="12px" lineHeight="16px" />
+          <Sk.Text height="12px" lineHeight="16px" />
         </div>
       </div>
     </div>

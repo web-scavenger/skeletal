@@ -29,7 +29,11 @@ async function waitForComponent(
   componentName: string,
   pattern: LoadingPattern,
 ): Promise<void> {
-  // Phase 1: Network idle — only for lazy/dynamic
+  // Phase 1: Network idle
+  // For all patterns: ensure React has fully hydrated with the latest compiled bundles.
+  // For lazy/dynamic: also waits for the lazy chunk to be loaded by the module system.
+  // (goto already uses networkidle, but a second wait is a safety net for chunks that
+  //  load after React's initial render completes — e.g. deferred lazy imports.)
   if (pattern === LOADING_PATTERNS.LAZY || pattern === LOADING_PATTERNS.DYNAMIC) {
     await page.waitForLoadState('networkidle', { timeout: PHASE2_TIMEOUT })
   }
@@ -55,7 +59,11 @@ async function measureAtBreakpoint(
   await page.setViewportSize({ width: breakpoint, height: 900 })
 
   try {
-    await page.goto(url, { waitUntil: 'domcontentloaded' })
+    // Use networkidle so the browser has received and executed all JS bundles
+    // (including any that are still compiling due to a recent HMR source change)
+    // before we attempt to locate data-sk elements. Without this, React may hydrate
+    // with a stale client bundle and overwrite SSR attributes during reconciliation.
+    await page.goto(url, { waitUntil: 'networkidle', timeout: PHASE2_TIMEOUT })
 
     try {
       await waitForComponent(page, candidate.name, candidate.pattern)

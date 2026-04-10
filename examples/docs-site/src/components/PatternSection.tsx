@@ -1,4 +1,6 @@
 import { CodeBlock } from './CodeBlock'
+import type { PatternId } from './PatternLiveDemo'
+import { PatternLiveDemo } from './PatternLiveDemo'
 
 const RSC_CODE = `// UserCard.tsx — async server component
 export async function UserCard() {
@@ -124,52 +126,72 @@ export function HeavyChartSkeleton() {
 
 export { HeavyChartSkeleton as skeleton }`
 
-const patterns = [
+const patterns: {
+  id: PatternId
+  tag: string
+  title: string
+  description: string
+  code: string
+}[] = [
   {
     id: 'rsc',
-    title: 'React Server Components (RSC)',
+    tag: 'rsc',
+    title: 'React Server Components',
     description:
       'Wrap any async server component. skeletal-ui detects the async function, captures rendered geometry via Playwright (bounding box, font-size, line-height, border-radius), and generates a co-located .skeleton.tsx file with pixel-accurate sizes that eliminate layout jump on state change.',
     code: RSC_CODE,
   },
   {
     id: 'csr',
-    title: 'Client-Side Rendering (CSR)',
+    tag: 'csr',
+    title: 'Client-Side Rendering',
     description:
       'Works with React Query, SWR, or any non-async component. The same SkeletonWrapper API — skeletal-ui detects non-async functions and skips the network-idle Playwright phase. Use the loading prop for explicit control.',
     code: CSR_CODE,
   },
   {
     id: 'lazy',
+    tag: 'lazy',
     title: 'React.lazy()',
     description:
-      'Drop-in replacement for React.lazy(). The loaded module exports a skeleton() function that is shown while the chunk loads.',
+      'Drop-in replacement for React.lazy(). The loaded module exports a skeleton() function that is shown while the chunk loads. No explicit Suspense needed — lazyWithSkeleton attaches it automatically.',
     code: LAZY_CODE,
   },
   {
     id: 'dynamic',
+    tag: 'dynamic',
     title: 'next/dynamic()',
     description:
       'Drop-in replacement for Next.js dynamic imports. Uses the module\'s skeleton() export as the loading state — no loading: () => <Spinner /> required.',
     code: DYNAMIC_CODE,
   },
-] as const
+]
 
 export function PatternSection() {
   return (
     <section className="py-24 px-4 bg-slate-900/20">
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-3xl font-bold text-white mb-3">Four patterns, one API</h2>
-        <p className="text-slate-400 mb-12">
-          skeletal handles every React loading pattern. Pick the wrapper that matches
-          your component type.
-        </p>
-        <div className="flex flex-col gap-16">
+      <div className="max-w-7xl mx-auto">
+        <div className="max-w-2xl mb-14">
+          <h2 className="text-3xl font-bold text-white mb-3">Four patterns, one API</h2>
+          <p className="text-slate-400">
+            skeletal handles every React loading pattern. Pick the wrapper that matches
+            your component type.
+          </p>
+        </div>
+        <div className="flex flex-col gap-20">
           {patterns.map(p => (
             <div key={p.id} id={`pattern-${p.id}`}>
-              <h3 className="text-xl font-semibold text-white mb-2">{p.title}</h3>
-              <p className="text-slate-400 mb-5 leading-relaxed">{p.description}</p>
-              <CodeBlock code={p.code} lang="tsx" />
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-xs font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">
+                  {p.tag}
+                </span>
+                <h3 className="text-xl font-semibold text-white">{p.title}</h3>
+              </div>
+              <p className="text-slate-400 mb-6 leading-relaxed max-w-3xl">{p.description}</p>
+              <div className="grid lg:grid-cols-2 gap-6 items-start">
+                <CodeBlock code={p.code} lang="tsx" />
+                <PatternLiveDemo patternId={p.id} />
+              </div>
             </div>
           ))}
         </div>

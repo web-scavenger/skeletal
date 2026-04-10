@@ -142,3 +142,6 @@ vite.config.ts.timestamp-*
 dist/
 .turbo/
 docs/
+.claude
+.agents
+skills-lock.json
