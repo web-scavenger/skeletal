@@ -92,9 +92,11 @@ export async function runAnalyze(options: {
     }
   }
 
-  // Allow dev server HMR to process the file changes
+  // Allow dev server to detect the file changes and begin recompiling.
+  // The Playwright goto (networkidle) will wait for bundles to finish serving,
+  // but giving Next.js a head start avoids the first navigation being slow.
   if (originalSources.size > 0) {
-    await new Promise<void>(resolve => setTimeout(resolve, 2000))
+    await new Promise<void>(resolve => setTimeout(resolve, 3000))
   }
 
   // Crawl with Playwright

@@ -91,6 +91,143 @@ function getTagName(node: Node): string {
   return ''
 }
 
+// --- Tailwind typography helpers (AST-only path) ---
+
+const TAILWIND_FONT_SIZE_PX: Record<string, number> = {
+  'text-xs': 12, 'text-sm': 14, 'text-base': 16, 'text-lg': 18,
+  'text-xl': 20, 'text-2xl': 24, 'text-3xl': 30, 'text-4xl': 36, 'text-5xl': 48,
+}
+
+// Returns the first text-size class found in `classes`, or empty string.
+function extractTextSizeClass(classes: string): string {
+  return classes.split(/\s+/).find(c => c in TAILWIND_FONT_SIZE_PX) ?? ''
+}
+
+// Returns font size in px. Falls back to `inheritedTextClass` before the 16px default.
+function tailwindFontSizePx(classes: string, inheritedTextClass = ''): number {
+  for (const cls of Object.keys(TAILWIND_FONT_SIZE_PX)) {
+    if (classes.includes(cls)) return TAILWIND_FONT_SIZE_PX[cls]!
+  }
+  if (inheritedTextClass && inheritedTextClass in TAILWIND_FONT_SIZE_PX) {
+    return TAILWIND_FONT_SIZE_PX[inheritedTextClass]!
+  }
+  return 16
+}
+
+const TAILWIND_LEADING: Record<string, number> = {
+  'leading-none': 1, 'leading-tight': 1.25, 'leading-snug': 1.375,
+  'leading-normal': 1.5, 'leading-relaxed': 1.625, 'leading-loose': 2,
+}
+
+// Tailwind's built-in line-heights that are bundled with each font-size utility.
+// These are the effective line-heights when no `leading-*` class is present.
+// Source: https://tailwindcss.com/docs/font-size
+const TAILWIND_PAIRED_LINE_HEIGHT_PX: Record<string, number> = {
+  'text-xs': 16,    // 1rem
+  'text-sm': 20,    // 1.25rem
+  'text-base': 24,  // 1.5rem
+  'text-lg': 28,    // 1.75rem
+  'text-xl': 28,    // 1.75rem
+  'text-2xl': 32,   // 2rem
+  'text-3xl': 36,   // 2.25rem
+  'text-4xl': 40,   // 2.5rem
+  'text-5xl': 48,   // 1 (leading-none)
+}
+
+function tailwindLeadingMultiplier(classes: string, inheritedTextClass = ''): number {
+  for (const cls of Object.keys(TAILWIND_LEADING)) {
+    if (classes.includes(cls)) return TAILWIND_LEADING[cls]!
+  }
+  // No explicit leading-* class: use Tailwind's paired line-height for the font-size utility.
+  // This is critical for layout stability — spans without leading-* use the paired default,
+  // not a generic 1.5 multiplier.
+  const textClass = extractTextSizeClass(classes) || inheritedTextClass
+  if (textClass && textClass in TAILWIND_PAIRED_LINE_HEIGHT_PX) {
+    return TAILWIND_PAIRED_LINE_HEIGHT_PX[textClass]! / TAILWIND_FONT_SIZE_PX[textClass]!
+  }
+  return 1.5
+}
+
+// Emit Sk.Heading with height derived from Tailwind classes.
+function headingFromClasses(classes: string, depth: number, inheritedTextClass = ''): string {
+  const i = ind(depth)
+  const fontSizePx = tailwindFontSizePx(classes, inheritedTextClass)
+  const heightPx = Math.round(fontSizePx * tailwindLeadingMultiplier(classes))
+  return `${i}<Sk.Heading height="${heightPx}px" />`
+}
+
+// Emit Sk.Text with height/lineHeight/lines derived from Tailwind classes.
+// <p> tags default to lines={2} unless staticText is provided and short enough to be single-line.
+// inheritedTextClass: closest ancestor's text-size class, used when the element has none.
+function textFromClasses(tag: string, classes: string, depth: number, spacingClasses = '', inheritedTextClass = '', staticText?: string): string {
+  const i = ind(depth)
+  const fontSizePx = tailwindFontSizePx(classes, inheritedTextClass)
+  const lhMul = tailwindLeadingMultiplier(classes, inheritedTextClass)
+  const lineHeightPx = Math.round(fontSizePx * lhMul)
+  const clsAttr = spacingClasses ? ` className="${spacingClasses}"` : ''
+
+  if (tag === 'p') {
+    // Use lines=1 if we have short static text (fits on one line); otherwise assume multi-line.
+    // Threshold of 80 chars covers typical card widths at sm/base font sizes.
+    const lines = (staticText !== undefined && staticText.length < 80) ? 1 : 2
+    if (lines === 1) {
+      return `${i}<Sk.Text${clsAttr} height="${fontSizePx}px" lineHeight="${lineHeightPx}px" />`
+    }
+    const gapPx = Math.round(lines * (lineHeightPx - fontSizePx) / (lines - 1))
+    return `${i}<Sk.Text${clsAttr} lines={${lines}} height="${fontSizePx}px" gap="${gapPx}px" />`
+  }
+  return `${i}<Sk.Text${clsAttr} height="${fontSizePx}px" lineHeight="${lineHeightPx}px" />`
+}
+
+// Try to resolve a JSX expression to a string literal value.
+// Handles: string literals, and simple property access on local `const` object declarations.
+function resolveStringLiteral(expr: Node, sf: SourceFile): string | null {
+  if (expr.getKind() === SyntaxKind.StringLiteral) {
+    return expr.asKind(SyntaxKind.StringLiteral)!.getLiteralValue()
+  }
+  if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
+    const propAccess = expr.asKind(SyntaxKind.PropertyAccessExpression)!
+    const objName = propAccess.getExpression().getText()
+    const propName = propAccess.getName()
+    const varDecl = sf.getVariableDeclaration(objName)
+    if (!varDecl) return null
+    let init = varDecl.getInitializer()
+    // Unwrap `as const` / type assertions: ({ ... } as const)
+    if (init?.getKind() === SyntaxKind.AsExpression) {
+      init = init.asKind(SyntaxKind.AsExpression)!.getExpression()
+    }
+    if (init?.getKind() !== SyntaxKind.ObjectLiteralExpression) return null
+    const obj = init.asKind(SyntaxKind.ObjectLiteralExpression)!
+    const prop = obj.getProperty(propName)
+    const value = prop?.asKind(SyntaxKind.PropertyAssignment)?.getInitializer()
+    if (value?.getKind() === SyntaxKind.StringLiteral) {
+      return value.asKind(SyntaxKind.StringLiteral)!.getLiteralValue()
+    }
+  }
+  return null
+}
+
+// Extract static text content from JSX children.
+// Returns the concatenated string if all text can be statically resolved, or null if truly dynamic.
+// Resolves simple property accesses on local const objects (e.g. {POST.excerpt}).
+function extractStaticText(children: Node[], sf: SourceFile): string | null {
+  const parts: string[] = []
+  for (const child of children) {
+    const k = child.getKind()
+    if (k === SyntaxKind.JsxText) {
+      const text = child.getText().trim()
+      if (text) parts.push(text)
+    } else if (k === SyntaxKind.JsxExpression) {
+      const expr = child.asKind(SyntaxKind.JsxExpression)?.getExpression()
+      if (!expr) continue
+      const resolved = resolveStringLiteral(expr, sf)
+      if (resolved !== null) parts.push(resolved)
+      else return null // truly dynamic — can't determine line count statically
+    }
+  }
+  return parts.join(' ').trim()
+}
+
 // --- Element classification helpers ---
 
 function isAvatarDiv(tag: string, classes: string): boolean {
@@ -191,7 +328,7 @@ function ind(depth: number): string {
   return '  '.repeat(depth + 2) // +2 for base indentation inside return (...)
 }
 
-function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = false): string {
+function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = false, inheritedTextClass = ''): string {
   const k = node.getKind()
 
   if (k === SyntaxKind.JsxText) return ''
@@ -199,7 +336,7 @@ function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = fal
   if (k === SyntaxKind.JsxFragment) {
     return node.asKind(SyntaxKind.JsxFragment)!
       .getJsxChildren()
-      .map(c => walkChild(c, sf, depth, parentIsFlex))
+      .map(c => walkChild(c, sf, depth, parentIsFlex, inheritedTextClass))
       .filter(Boolean)
       .join('\n')
   }
@@ -207,13 +344,13 @@ function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = fal
   if (k === SyntaxKind.JsxExpression) {
     const expr = node.asKind(SyntaxKind.JsxExpression)?.getExpression()
     if (!expr) return ''
-    return walkExpr(expr, sf, depth)
+    return walkExpr(expr, sf, depth, inheritedTextClass)
   }
 
   if (k === SyntaxKind.JsxSelfClosingElement) {
     const tag = node.asKind(SyntaxKind.JsxSelfClosingElement)!.getTagNameNode().getText()
     const classes = getClassFromOpeningOrSelfClosing(node)
-    return classifyLeaf(tag, classes, depth)
+    return classifyLeaf(tag, classes, depth, inheritedTextClass)
   }
 
   if (k === SyntaxKind.JsxElement) {
@@ -221,20 +358,20 @@ function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = fal
     const tag = el.getOpeningElement().getTagNameNode().getText()
     const classes = getClassFromOpeningOrSelfClosing(el.getOpeningElement())
     const children = el.getJsxChildren()
-    return classifyNode(tag, classes, children, sf, depth, parentIsFlex)
+    return classifyNode(tag, classes, children, sf, depth, parentIsFlex, inheritedTextClass)
   }
 
   return ''
 }
 
-function classifyLeaf(tag: string, classes: string, depth: number): string {
+function classifyLeaf(tag: string, classes: string, depth: number, inheritedTextClass = ''): string {
   const i = ind(depth)
   if (tag === 'img') return `${i}<Sk.Image />`
   if (tag === 'button') return `${i}<Sk.Button />`
-  if (isHeadingTag(tag)) return `${i}<Sk.Heading />`
+  if (isHeadingTag(tag)) return headingFromClasses(classes, depth, inheritedTextClass)
   if (isAvatarDiv(tag, classes)) return `${i}<Sk.Avatar size={${tailwindToPx(classes, 'w')}} />`
   if (isNumberLike(tag, classes)) return `${i}<Sk.Number />`
-  if (isTextTag(tag)) return `${i}<Sk.Text />`
+  if (isTextTag(tag)) return textFromClasses(tag, classes, depth, '', inheritedTextClass)
   return ''
 }
 
@@ -245,11 +382,12 @@ function classifyNode(
   sf: SourceFile,
   depth: number,
   parentIsFlex = false,
+  inheritedTextClass = '',
 ): string {
   const i = ind(depth)
 
   if (isAvatarDiv(tag, classes)) return `${i}<Sk.Avatar size={${tailwindToPx(classes, 'w')}} />`
-  if (isHeadingTag(tag)) return `${i}<Sk.Heading />`
+  if (isHeadingTag(tag)) return headingFromClasses(classes, depth, inheritedTextClass)
   if (tag === 'button') return `${i}<Sk.Button />`
   if (tag === 'img') return `${i}<Sk.Image />`
 
@@ -271,15 +409,20 @@ function classifyNode(
   if (isTextTag(tag) && hasOnlyInlineChildren(children)) {
     if (isNumberLike(tag, classes)) return `${i}<Sk.Number />`
     const spacing = extractSpacingClasses(classes)
-    const clsAttr = spacing ? ` className="${spacing}"` : ''
-    return `${i}<Sk.Text${clsAttr} />`
+    const staticText = tag === 'p' ? extractStaticText(children, sf) ?? undefined : undefined
+    return textFromClasses(tag, classes, depth, spacing, inheritedTextClass, staticText)
   }
 
   if (tag === 'ul' || tag === 'ol') return `${i}<Sk.List />`
 
+  // Pass down the closest text-size class so child text elements without
+  // their own text-size class can inherit the correct font size.
+  const ownTextClass = extractTextSizeClass(classes)
+  const childInheritedTextClass = ownTextClass || inheritedTextClass
+
   const thisIsFlex = classes.includes('flex')
   const childLines = children
-    .map(c => walkChild(c, sf, depth + 1, thisIsFlex))
+    .map(c => walkChild(c, sf, depth + 1, thisIsFlex, childInheritedTextClass))
     .filter(s => s.trim())
 
   if (childLines.length === 0) return ''
@@ -301,7 +444,7 @@ function classifyNode(
   return [`${i}<${tag}${clsAttr}>`, ...childLines, `${i}</${tag}>`].join('\n')
 }
 
-function walkExpr(expr: Node, sf: SourceFile, depth: number): string {
+function walkExpr(expr: Node, sf: SourceFile, depth: number, inheritedTextClass = ''): string {
   // arr.map(item => <JSX />) — render template N times
   if (expr.getKind() === SyntaxKind.CallExpression) {
     const call = expr.asKind(SyntaxKind.CallExpression)!
@@ -341,7 +484,7 @@ function walkExpr(expr: Node, sf: SourceFile, depth: number): string {
 
       const arrayVarPath = callText.slice(0, -4) // remove '.map'
       const count = resolveArrayLength(sf, arrayVarPath) ?? 1
-      const template = walkChild(jsxNode, sf, depth)
+      const template = walkChild(jsxNode, sf, depth, false, inheritedTextClass)
       if (!template.trim()) return ''
 
       return Array(count).fill(template).join('\n')
@@ -351,7 +494,7 @@ function walkExpr(expr: Node, sf: SourceFile, depth: number): string {
   // cond ? <A /> : <B /> — use truthy branch
   if (expr.getKind() === SyntaxKind.ConditionalExpression) {
     const truthy = expr.asKind(SyntaxKind.ConditionalExpression)!.getWhenTrue()
-    return walkChild(truthy, sf, depth)
+    return walkChild(truthy, sf, depth, false, inheritedTextClass)
   }
 
   return ''

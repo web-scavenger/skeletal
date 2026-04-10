@@ -2,7 +2,7 @@
 
 > Automate skeleton loading screens for React and Next.js TypeScript projects.
 
-skeletal-ui scans your codebase, crawls your running app with Playwright to capture real element geometry (bounding box, border-radius, font-size, line-height), and generates pixel-accurate `.skeleton.tsx` files — no manual shimmer code, no copy-pasting CSS, no drift from the real UI.
+skeletal-ui scans your codebase, crawls your running app with Playwright to capture real element geometry (bounding box, border-radius, font-size, line-height), and generates pixel-accurate `.skeleton.tsx` files — no manual skeleton code, no copy-pasting CSS, no drift from the real UI.
 
 **[Live demo →](https://web-scavenger.github.io/skeletal/)**
 
@@ -477,22 +477,21 @@ import { SkeletonWrapper } from 'skeletal-ui'
 
 ## SkeletonProvider
 
-Override the default shimmer theme for a subtree using CSS custom properties.
+Override the default pulse theme for a subtree using CSS custom properties.
 
 ```tsx
 import { SkeletonProvider } from 'skeletal-ui'
 
-<SkeletonProvider color="#e0e0e0" highlight="#f5f5f5" radius={8} duration={1.2}>
+<SkeletonProvider color="#e0e0e0" radius={8} duration={1.5}>
   <Dashboard />
 </SkeletonProvider>
 ```
 
 | Prop | Type | Default | CSS variable |
 |---|---|---|---|
-| `color` | `string` | `#ebebeb` | `--sk-color` |
-| `highlight` | `string` | `#f5f5f5` | `--sk-highlight` |
-| `radius` | `number` | `6` | `--sk-radius` |
-| `duration` | `number` | `1.4` | `--sk-duration` (seconds) |
+| `color` | `string` | `#e2e8f0` | `--sk-color` |
+| `radius` | `number` | `4` | `--sk-radius` |
+| `duration` | `number` | `2` | `--sk-duration` (seconds) |
 | `children` | `ReactNode` | required | — |
 
 You can also override these variables globally in your own CSS:
@@ -500,9 +499,8 @@ You can also override these variables globally in your own CSS:
 ```css
 :root {
   --sk-color: #e0e0e0;
-  --sk-highlight: #f0f0f0;
   --sk-radius: 4px;
-  --sk-duration: 1s;
+  --sk-duration: 1.5s;
 }
 ```
 
@@ -581,8 +579,8 @@ export default defineConfig({
   output: 'colocated',                 // 'colocated' | 'directory'
   outputDir: 'src/skeletons',          // only when output: 'directory'
 
-  // Shimmer animation style
-  animation: 'shimmer',               // 'shimmer' | 'pulse' | 'none'
+  // Animation style
+  animation: 'pulse',                 // 'pulse' | 'none'
 
   // Border radius for all primitives (px)
   radius: 6,

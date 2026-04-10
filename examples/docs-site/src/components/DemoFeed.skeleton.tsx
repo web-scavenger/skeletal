@@ -12,29 +12,29 @@ export function DemoFeedSkeleton() {
       <div className="flex items-start gap-3 p-4">
         <Sk.Avatar size={32} />
         <div className="flex-1 min-w-0">
-          <Sk.Text height="14px" lineHeight="20px" width="248px" />
-          <Sk.Text className="mt-1" height="12px" lineHeight="16px" width="248px" />
+          <Sk.Text lines={2} height="14px" gap="14px" />
+          <Sk.Text className="mt-1" lines={2} height="12px" gap="12px" />
         </div>
       </div>
       <div className="flex items-start gap-3 p-4">
         <Sk.Avatar size={32} />
         <div className="flex-1 min-w-0">
-          <Sk.Text height="14px" lineHeight="20px" width="248px" />
-          <Sk.Text className="mt-1" height="12px" lineHeight="16px" width="248px" />
+          <Sk.Text lines={2} height="14px" gap="14px" />
+          <Sk.Text className="mt-1" lines={2} height="12px" gap="12px" />
         </div>
       </div>
       <div className="flex items-start gap-3 p-4">
         <Sk.Avatar size={32} />
         <div className="flex-1 min-w-0">
-          <Sk.Text height="14px" lineHeight="20px" width="248px" />
-          <Sk.Text className="mt-1" height="12px" lineHeight="16px" width="248px" />
+          <Sk.Text lines={2} height="14px" gap="14px" />
+          <Sk.Text className="mt-1" lines={2} height="12px" gap="12px" />
         </div>
       </div>
       <div className="flex items-start gap-3 p-4">
         <Sk.Avatar size={32} />
         <div className="flex-1 min-w-0">
-          <Sk.Text height="14px" lineHeight="20px" width="248px" />
-          <Sk.Text className="mt-1" height="12px" lineHeight="16px" width="248px" />
+          <Sk.Text lines={2} height="14px" gap="14px" />
+          <Sk.Text className="mt-1" lines={2} height="12px" gap="12px" />
         </div>
       </div>
     </div>

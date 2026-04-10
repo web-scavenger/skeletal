@@ -13,7 +13,7 @@ export function DemoDynamicSkeleton() {
         <Sk.Text height="14px" lineHeight="20px" width="104px" />
         <Sk.Text height="12px" lineHeight="16px" width="32px" />
       </div>
-      <Sk.Card width="87%" height={80} padding={0} />
+      <Sk.Card width="93%" height={80} padding={0} />
       <div className="flex justify-between">
         <Sk.Text height="12px" lineHeight="16px" width="25px" />
         <Sk.Text height="12px" lineHeight="16px" width="21px" />

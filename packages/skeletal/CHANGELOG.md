@@ -7,6 +7,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.6.0] — 2026-04-10
+
+### Changed
+
+- **Animation — shimmer → pulse**: replaced the horizontal gradient sweep (`skeletalShimmer`) with an opacity-based pulse (`skeletalPulse`: `opacity 1 → 0.4 → 1`). Easing updated to `cubic-bezier(0.4, 0, 0.6, 1)` and duration increased from `1.5s` to `2s`. Matches the feel of shadcn/ui `animate-pulse`. The `--sk-highlight` CSS variable has been removed (was only used by the shimmer gradient).
+- **`SkeletonProvider` — removed `highlight` prop**: no longer needed after animation change. `color`, `radius`, and `duration` remain.
+- **AST generator — `tailwindLeadingMultiplier` uses Tailwind paired line-heights**: previously fell back to a hardcoded `1.5` multiplier when no `leading-*` class was present. Now uses Tailwind's built-in font-size/line-height pairs (`text-xs` → 16px, `text-sm` → 20px, `text-lg` → 28px, etc.), matching the browser's computed `line-height` and eliminating height jumps for `<span>` elements in the AST-only path.
+- **AST generator — `tailwindLeadingMultiplier` receives `inheritedTextClass`**: the `inheritedTextClass` parameter was passed to `tailwindFontSizePx` but not to `tailwindLeadingMultiplier`. Fixed so that child elements inheriting a parent's `text-*` class also inherit the correct paired line-height.
+
+### Fixed
+
+- **Layout jump on skeleton ↔ loaded toggle for `<span>` elements (AST-only path)**: caused by `lineHeight` being 18px for `text-xs` spans instead of the correct 16px. Root cause was the missing Tailwind paired line-height lookup (see Changed above).
+- **`<p>` with short static text emitting `lines={2}`**: the AST-only path hardcoded `lines={2}` for every `<p>` tag. Now resolves the paragraph's text at analysis time — including property accesses on local `const` objects (e.g. `{POST.excerpt}`, even with `as const`) — and emits `lines={1}` when the resolved text is under 80 characters. Dynamic expressions that cannot be statically resolved still default to `lines={2}`.
+
+---
+
 ## [0.5.0] — 2026-04-08
 
 ### Fixed
@@ -76,10 +92,11 @@ Initial release.
 - Primitives: `Sk.Text`, `Sk.Heading`, `Sk.Avatar`, `Sk.Image`, `Sk.Button`, `Sk.Badge`, `Sk.Number`, `Sk.Icon`, `Sk.List`, `Sk.Card`.
 - `SkeletonWrapper`, `SkeletonProvider`, `DefaultPulseSkeleton`.
 - `lazyWithSkeleton` (runtime), `dynamicWithSkeleton` (Next.js), Vite plugin.
-- CSS-only shimmer animation with `prefers-reduced-motion` support.
+- CSS-only pulse animation with `prefers-reduced-motion` support.
 - AST hash staleness detection (`skeletal:hash` header comment).
 - `skeletal.config.ts` with `defineConfig()` and Zod schema validation.
 
+[0.6.0]: https://github.com/web-scavenger/skeletal/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/web-scavenger/skeletal/compare/v0.2.0...v0.5.0
 [0.2.0]: https://github.com/web-scavenger/skeletal/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/web-scavenger/skeletal/releases/tag/v0.1.0

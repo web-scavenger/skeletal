@@ -11,15 +11,15 @@ export function DemoArticleSkeleton() {
     <div className="w-full rounded-xl border border-slate-700 bg-slate-950 overflow-hidden">
       <Sk.Image aspectRatio="16/9" width="100%" />
       <div className="p-5 flex flex-col gap-3">
-        <Sk.Text height="12px" lineHeight="16px" width="284px" />
-        <Sk.Heading height="39px" width="88%" />
-        <Sk.Text lines={4} height="12px" gap="10px" width="88%" />
+        <Sk.Text height="12px" lineHeight="18px" />
+        <Sk.Heading height="19px" />
+        <Sk.Text lines={2} height="12px" gap="16px" />
         <div className="flex items-center justify-between pt-3 border-t">
           <div className="flex items-center gap-2">
             <Sk.Avatar size={24} />
-            <Sk.Text height="12px" lineHeight="16px" width="63px" />
+            <Sk.Text height="12px" lineHeight="18px" />
           </div>
-          <Sk.Text height="12px" lineHeight="16px" width="60px" />
+          <Sk.Text height="12px" lineHeight="18px" />
         </div>
       </div>
     </div>
