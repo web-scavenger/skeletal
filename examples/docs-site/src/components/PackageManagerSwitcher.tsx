@@ -19,11 +19,17 @@ const INIT: Record<PM, string> = {
   yarn: 'yarn dlx skeletal-ui init',
 }
 
-interface Props {
-  configBlock: ReactNode
+const ANALYZE: Record<PM, string> = {
+  pnpm: 'pnpm dlx skeletal-ui analyze',
+  npm: 'npx skeletal-ui analyze',
+  yarn: 'yarn dlx skeletal-ui analyze',
 }
 
-export function PackageManagerSwitcher({ configBlock }: Props) {
+interface Props {
+  generatedConfigBlock: ReactNode
+}
+
+export function PackageManagerSwitcher({ generatedConfigBlock }: Props) {
   const [pm, setPm] = useState<PM>('pnpm')
 
   return (
@@ -57,15 +63,9 @@ export function PackageManagerSwitcher({ configBlock }: Props) {
         </div>
       </div>
 
-      {/* Step 2 — Configure (server-rendered CodeBlock passed as prop) */}
+      {/* Step 2 — Init wizard */}
       <div>
-        <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">2. Configure</p>
-        {configBlock}
-      </div>
-
-      {/* Step 3 — Init */}
-      <div>
-        <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">3. Init</p>
+        <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">2. Init</p>
         <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-sm">
           <div className="flex items-center gap-3 text-slate-300 min-w-0">
             <span className="text-slate-500 select-none flex-shrink-0">$</span>
@@ -73,8 +73,31 @@ export function PackageManagerSwitcher({ configBlock }: Props) {
           </div>
           <CopyButton text={INIT[pm]} />
         </div>
-        <p className="mt-2 text-xs text-slate-600">
-          Validates your config, checks Playwright install, and runs a test crawl.
+        <p className="mt-2 text-xs text-slate-500">
+          Interactive wizard — detects your framework, discovers routes from disk,
+          previews the config before writing <code className="font-mono">skeletal.config.ts</code>.
+        </p>
+        <div className="mt-4">
+          <p className="text-xs font-medium text-slate-500 mb-2">Example generated config:</p>
+          {generatedConfigBlock}
+        </div>
+      </div>
+
+      {/* Step 3 — Analyze */}
+      <div>
+        <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">3. Analyze</p>
+        <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-sm">
+          <div className="flex items-center gap-3 text-slate-300 min-w-0">
+            <span className="text-slate-500 select-none flex-shrink-0">$</span>
+            <span className="truncate">{ANALYZE[pm]}</span>
+          </div>
+          <CopyButton text={ANALYZE[pm]} />
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Scans components, crawls with Playwright, and generates{' '}
+          <code className="font-mono">.skeleton.tsx</code> files next to each component.
+          Add <code className="font-mono">--no-browser</code> to skip Playwright and generate
+          minimal skeletons from AST alone.
         </p>
       </div>
     </div>

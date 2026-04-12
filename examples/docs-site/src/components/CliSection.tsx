@@ -2,7 +2,7 @@ const commands = [
   {
     name: 'init',
     args: '',
-    desc: 'Interactive setup — creates skeletal.config.ts, walks through dev server URL and route selection',
+    desc: 'Interactive wizard — detects framework, discovers routes from disk (Quick or Advanced mode), previews and writes skeletal.config.ts',
   },
   {
     name: 'analyze',

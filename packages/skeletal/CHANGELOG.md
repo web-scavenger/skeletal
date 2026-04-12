@@ -7,6 +7,25 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.7.0] — 2026-04-12
+
+### Changed
+
+- **`init` command — full interactive wizard overhaul**: replaced the minimal 3-question prompt with a fully guided wizard supporting **Quick** and **Advanced** modes. Quick mode asks only devServer URL, routes, and animation, then writes config and exits. Advanced mode additionally prompts for border radius, framework (if not auto-detected), and Playwright concurrency.
+- **`init` — auto-detects framework and dev server port**: reads `package.json` deps/devDeps to detect `nextjs` or `vite`, and parses `scripts.dev` / `scripts.start` for `--port`/`-p` flags. Default port is `5173` for Vite, `3000` otherwise.
+- **`init` — route discovery from disk**: scans the project's `src/app/`, `app/`, `src/pages/`, or `pages/` directories and presents discovered routes as a pre-selected multiselect checklist. App router strips route groups (`(group)` segments) and preserves dynamic segments (`[slug]`). Pages router excludes `api/`, `_app`, `_document`, `_error`. Detected routes can be deselected, and custom routes added via a free-text field.
+- **`init` — config preview before write**: displays the full generated config via `clack.note()` and requires explicit confirmation before writing `skeletal.config.ts`.
+- **`init` — `include`, `exclude`, `output` always written**: both Quick and Advanced configs now include `include: ['src/**/*.tsx']`, `exclude: ['**/*.test.*', '**/*.spec.*', '**/node_modules/**']`, and `output: 'colocated'` with their defaults. Previously these were omitted or hardcoded silently.
+- **`init` — CSR/lazy/dynamic always enabled**: removed the multiselect that allowed toggling these patterns off. Advanced config always emits `csr`, `lazy`, and `dynamic` as enabled. The prompts added friction with no practical use case for disabling them.
+- **Docs site — installation flow updated**: landing page now shows a 3-step flow (Install → Init → Analyze) replacing the previous Install → Configure → Init flow. The `init` step description and the example config block reflect the wizard's actual output.
+
+### Added
+
+- **`detect-project.ts`** — new pure utility (`detectProject(projectRoot): DetectedProject`) encapsulating framework detection, dev server URL synthesis, and route discovery. Fully testable with no clack dependency.
+- **21 unit tests for `detectProject`**: cover framework detection (next/vite/none/no package.json), port extraction (defaults, `--port`, `-p`, start script fallback), app router discovery (root, nested, route groups, dynamic segments, `_` dir filtering, `src/app` precedence), pages router discovery (index, nested, `/index` stripping, api exclusion, `_` file exclusion), and no-router fallback.
+
+---
+
 ## [0.6.0] — 2026-04-10
 
 ### Changed
@@ -96,6 +115,7 @@ Initial release.
 - AST hash staleness detection (`skeletal:hash` header comment).
 - `skeletal.config.ts` with `defineConfig()` and Zod schema validation.
 
+[0.7.0]: https://github.com/web-scavenger/skeletal/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/web-scavenger/skeletal/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/web-scavenger/skeletal/compare/v0.2.0...v0.5.0
 [0.2.0]: https://github.com/web-scavenger/skeletal/compare/v0.1.0...v0.2.0
