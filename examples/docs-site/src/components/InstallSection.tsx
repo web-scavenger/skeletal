@@ -1,18 +1,16 @@
 import { CodeBlock } from './CodeBlock'
 import { PackageManagerSwitcher } from './PackageManagerSwitcher'
 
-const CONFIG_CODE = `// skeletal.config.ts
+const GENERATED_CONFIG_CODE = `// skeletal.config.ts  (Quick mode output)
 import { defineConfig } from 'skeletal-ui'
 
 export default defineConfig({
   devServer: 'http://localhost:3000',
-  routes: ['/'],
+  routes: ['/', '/dashboard'],
   include: ['src/**/*.tsx'],
-  exclude: ['**/*.skeleton.tsx'],
+  exclude: ['**/*.test.*', '**/*.spec.*', '**/node_modules/**'],
   output: 'colocated',
   animation: 'shimmer',
-  csr: { enabled: true },
-  lazy: { enabled: true },
 })`
 
 const STYLES_CODE = `// app/layout.tsx  (Next.js)  or  main.tsx  (Vite)
@@ -30,7 +28,9 @@ export function InstallSection() {
           <code className="text-slate-300 font-mono text-sm">react &gt;= 18</code>{' '}
           as peer dependencies.
         </p>
-        <PackageManagerSwitcher configBlock={<CodeBlock code={CONFIG_CODE} lang="ts" />} />
+        <PackageManagerSwitcher
+          generatedConfigBlock={<CodeBlock code={GENERATED_CONFIG_CODE} lang="ts" />}
+        />
         <div className="mt-8">
           <p className="text-sm font-medium text-slate-300 mb-3">
             Import the default shimmer styles once in your app entry point:

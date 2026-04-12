@@ -4,9 +4,9 @@ export default defineConfig({
   devServer: 'http://localhost:3000',
   routes: ['/'],
   include: ['src/**/*.tsx'],
-  exclude: ['**/*.skeleton.tsx'],
+  exclude: ['**/*.test.*', '**/*.spec.*', '**/node_modules/**'],
   output: 'colocated',
-  animation: 'shimmer',
+  animation: 'pulse',
   csr: { enabled: true },
   lazy: { enabled: true },
 })
