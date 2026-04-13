@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useSkeletalContext } from './context.js'
 
 export interface CardProps {
   width?: string | number
@@ -9,20 +10,24 @@ export interface CardProps {
 }
 
 export function Card({
-  width = '100%',
+  width,
   height,
-  padding = 16,
+  padding,
   children,
   className,
 }: CardProps) {
+  const ctx = useSkeletalContext()
+  const resolvedWidth = width ?? '100%'
+  const resolvedPadding = padding ?? ctx.primitives?.card?.padding ?? 16
+
   return (
     <span
       className={`sk-base${className ? ` ${className}` : ''}`}
       style={{
         display: 'block',
-        width,
+        width: resolvedWidth,
         height,
-        padding,
+        padding: resolvedPadding,
         boxSizing: 'border-box',
       }}
       aria-hidden="true"

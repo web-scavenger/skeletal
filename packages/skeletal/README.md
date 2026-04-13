@@ -35,6 +35,7 @@ npx skeletal-ui analyze
   - [Sk.Card](#skcard)
 - [SkeletonWrapper](#skeletonwrapper)
 - [SkeletonProvider](#skeletonprovider)
+- [Customizing defaults](#customizing-defaults)
 - [CLI reference](#cli-reference)
 - [Configuration reference](#configuration-reference)
 - [Framework integrations](#framework-integrations)
@@ -477,7 +478,7 @@ import { SkeletonWrapper } from 'skeletal-ui'
 
 ## SkeletonProvider
 
-Override the default pulse theme for a subtree using CSS custom properties.
+Override the default pulse theme and `Sk.*` primitive defaults for a subtree.
 
 ```tsx
 import { SkeletonProvider } from 'skeletal-ui'
@@ -485,16 +486,22 @@ import { SkeletonProvider } from 'skeletal-ui'
 <SkeletonProvider color="#e0e0e0" radius={8} duration={1.5}>
   <Dashboard />
 </SkeletonProvider>
+
+// Override Sk.* primitive defaults at runtime
+<SkeletonProvider primitives={{ avatar: { size: 32 }, list: { count: 4 } }}>
+  <App />
+</SkeletonProvider>
 ```
 
-| Prop | Type | Default | CSS variable |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `color` | `string` | `#e2e8f0` | `--sk-color` |
-| `radius` | `number` | `4` | `--sk-radius` |
-| `duration` | `number` | `2` | `--sk-duration` (seconds) |
+| `color` | `string` | `#e2e8f0` | Sets `--sk-color` CSS variable |
+| `radius` | `number` | `4` | Sets `--sk-radius` (px) CSS variable |
+| `duration` | `number` | `2` | Sets `--sk-duration` (seconds) CSS variable |
+| `primitives` | `PrimitivesConfig` | — | Override `Sk.*` component defaults for this subtree |
 | `children` | `ReactNode` | required | — |
 
-You can also override these variables globally in your own CSS:
+You can also override the CSS variables globally in your own CSS:
 
 ```css
 :root {
@@ -503,6 +510,99 @@ You can also override these variables globally in your own CSS:
   --sk-duration: 1.5s;
 }
 ```
+
+---
+
+## Customizing defaults
+
+skeletal-ui exposes three optional config namespaces — `tailwind`, `classifier`, and `primitives` — that let you adapt all hardcoded sizes and thresholds to your design system. All keys are optional and deep-merged with the built-in defaults, so you only override what you need.
+
+### Tailwind overrides (`tailwind`)
+
+skeletal-ui uses a built-in Tailwind font-size/line-height table for AST analysis. If you use a custom Tailwind config, Tailwind v4 with different base values, or a non-standard spacing unit, override just the entries you changed:
+
+```ts
+export default defineConfig({
+  devServer: 'http://localhost:3000',
+
+  tailwind: {
+    // Override specific font-size values (px). Unspecified entries keep defaults.
+    fontSizePx: { 'text-2xl': 28, 'text-3xl': 34 },
+
+    // Override Tailwind's paired line-heights (px per font-size class).
+    pairedLineHeightPx: { 'text-2xl': 36, 'text-3xl': 42 },
+
+    // Tailwind spacing unit in px (default: 4). Change only for non-standard configs.
+    spacingUnit: 4,
+
+    // Max char length for single-line <p> detection (default: 80).
+    textLengthThreshold: 60,
+  },
+})
+```
+
+### Classifier overrides (`classifier`)
+
+These thresholds control how DOM elements are classified from Playwright geometry. Adjust them if your design system uses dimensions outside the defaults:
+
+```ts
+export default defineConfig({
+  devServer: 'http://localhost:3000',
+
+  classifier: {
+    lineHeightEstimate: 24,     // px per line when estimating <p> line count (default: 20)
+    avatarSmallMax: 40,         // max px for a square to be Avatar/Icon (default: 48)
+    iconMax: 28,                // max px for a small square to be Icon vs Avatar (default: 32)
+    avatarMediumMax: 64,        // max px for a circular element to be Avatar (default: 80)
+    badgeMaxHeight: 24,         // max height (px) for badge detection (default: 28)
+    badgeMaxWidth: 100,         // max width (px) for badge detection (default: 120)
+    textSingleLineMaxHeight: 28, // max height (px) for single-line text (default: 30)
+    textMultiLineMinWidthRatio: 0.5, // min width ratio for multi-line text (default: 0.4)
+    imageMinDimension: 80,      // min px for image detection (default: 100)
+    imageAspectRatioMin: 0.75,  // aspect ratio below this → image (default: 0.8)
+    imageAspectRatioMax: 1.3,   // aspect ratio above this → image (default: 1.2)
+  },
+})
+```
+
+### Primitive defaults (`primitives`)
+
+Override default prop values for all `Sk.*` components. Changes apply in two places:
+
+- **Codegen** — generated `.skeleton.tsx` files omit props whose value matches the (overridden) default, keeping generated code clean.
+- **Runtime** — `Sk.*` components use the new defaults when no explicit prop is passed.
+
+```ts
+export default defineConfig({
+  devServer: 'http://localhost:3000',
+
+  primitives: {
+    avatar: { size: 32, shape: 'circle' },
+    icon: { size: 20 },
+    button: { width: 100, height: 32 },
+    badge: { width: 56, height: 18 },
+    text: { lastLineWidth: '75%', gap: '0.5em', height: '1em' },
+    heading: { width: '65%', height: '1.4em' },
+    image: { aspectRatio: '4/3' },
+    card: { padding: 12 },
+    list: { count: 4, gap: 16 },
+    defaultPulseSkeleton: { height: 160 },
+  },
+})
+```
+
+**Runtime override** — use `SkeletonProvider` to override defaults for a subtree without touching the config file:
+
+```tsx
+<SkeletonProvider primitives={{ avatar: { size: 32 }, list: { count: 4 } }}>
+  <App />
+</SkeletonProvider>
+```
+
+**Three-layer resolution** for every `Sk.*` prop:
+1. Explicit prop on the component (`<Sk.Avatar size={64} />`) — always wins
+2. `SkeletonProvider primitives` context default
+3. Hardcoded skeletal-ui default
 
 ---
 
@@ -601,6 +701,44 @@ export default defineConfig({
 
   // Max concurrent Playwright pages
   concurrency: 4,
+
+  // Tailwind font-size / line-height overrides for AST analysis
+  // (partial; deep-merged with defaults — only specify what you changed)
+  tailwind: {
+    fontSizePx: { 'text-2xl': 28 },
+    pairedLineHeightPx: { 'text-2xl': 36 },
+    spacingUnit: 4,
+    textLengthThreshold: 80,
+  },
+
+  // Geometry classifier thresholds
+  classifier: {
+    lineHeightEstimate: 20,
+    avatarSmallMax: 48,
+    iconMax: 32,
+    avatarMediumMax: 80,
+    badgeMaxHeight: 28,
+    badgeMaxWidth: 120,
+    textSingleLineMaxHeight: 30,
+    textMultiLineMinWidthRatio: 0.4,
+    imageMinDimension: 100,
+    imageAspectRatioMin: 0.8,
+    imageAspectRatioMax: 1.2,
+  },
+
+  // Sk.* primitive defaults — affects codegen output and runtime rendering
+  primitives: {
+    avatar: { size: 40, shape: 'circle' },
+    icon: { size: 24 },
+    button: { width: 120, height: 36 },
+    badge: { width: 60, height: 20 },
+    text: { lines: 1, lastLineWidth: '60%', height: '1em', gap: '0.4em' },
+    heading: { width: '70%', height: '1.4em' },
+    image: { aspectRatio: '16/9' },
+    card: { padding: 16 },
+    list: { count: 3, gap: 12 },
+    defaultPulseSkeleton: { height: 200 },
+  },
 })
 ```
 

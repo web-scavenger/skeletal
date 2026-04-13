@@ -2,16 +2,18 @@ import type { ExtractedChildGeometry } from '../playwright-crawler/types.js'
 import type { ExtractedGeometry } from '../playwright-crawler/types.js'
 import type { ClassifiedElement, SkeletonTree, SkPrimitiveType } from './types.js'
 import { SK_PRIMITIVE_TYPES } from './types.js'
-import { CLASSIFICATION_RULES } from './rules.js'
+import type { ClassificationRule, ClassifierThresholds } from './rules.js'
+import { buildClassificationRules, resolveClassifierThresholds } from './rules.js'
 
 function classifyElement(
   el: ExtractedChildGeometry,
   parentWidth: number,
+  rules: ClassificationRule[],
 ): ClassifiedElement {
   let primitiveType: SkPrimitiveType = SK_PRIMITIVE_TYPES.UNKNOWN
   let props: Record<string, unknown> = {}
 
-  for (const rule of CLASSIFICATION_RULES) {
+  for (const rule of rules) {
     if (rule.match(el)) {
       const result = rule.classify(el, parentWidth)
       primitiveType = result.type
@@ -26,7 +28,7 @@ function classifyElement(
 
   // Recursively classify children
   const children: ClassifiedElement[] = el.children.map(
-    child => classifyElement(child, el.boundingBox.width),
+    child => classifyElement(child, el.boundingBox.width, rules),
   )
 
   return {
@@ -37,7 +39,9 @@ function classifyElement(
   }
 }
 
-export function classify(geometry: ExtractedGeometry): SkeletonTree {
+export function classify(geometry: ExtractedGeometry, thresholds?: ClassifierThresholds): SkeletonTree {
+  const rules = buildClassificationRules(thresholds ?? resolveClassifierThresholds())
+
   if (geometry.timedOut || geometry.children.length === 0) {
     // Minimal fallback skeleton
     return [{
@@ -52,6 +56,6 @@ export function classify(geometry: ExtractedGeometry): SkeletonTree {
   }
 
   return geometry.children.map(
-    child => classifyElement(child, geometry.boundingBox.width),
+    child => classifyElement(child, geometry.boundingBox.width, rules),
   )
 }

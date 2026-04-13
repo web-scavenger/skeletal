@@ -1,6 +1,49 @@
 import { Project, SyntaxKind } from 'ts-morph'
 import type { Node, SourceFile, ObjectLiteralExpression } from 'ts-morph'
 import type { ExtractedChildGeometry, ExtractedGeometry } from '../playwright-crawler/types.js'
+import type { TailwindConfig } from '../config/types.js'
+
+// --- AstConstants ---
+
+export interface AstConstants {
+  fontSizePx: Record<string, number>
+  leading: Record<string, number>
+  pairedLineHeightPx: Record<string, number>
+  spacingUnit: number
+  textLengthThreshold: number
+}
+
+const DEFAULT_FONT_SIZE_PX: Record<string, number> = {
+  'text-xs': 12, 'text-sm': 14, 'text-base': 16, 'text-lg': 18,
+  'text-xl': 20, 'text-2xl': 24, 'text-3xl': 30, 'text-4xl': 36, 'text-5xl': 48,
+}
+
+const DEFAULT_LEADING: Record<string, number> = {
+  'leading-none': 1, 'leading-tight': 1.25, 'leading-snug': 1.375,
+  'leading-normal': 1.5, 'leading-relaxed': 1.625, 'leading-loose': 2,
+}
+
+const DEFAULT_PAIRED_LINE_HEIGHT_PX: Record<string, number> = {
+  'text-xs': 16,    // 1rem
+  'text-sm': 20,    // 1.25rem
+  'text-base': 24,  // 1.5rem
+  'text-lg': 28,    // 1.75rem
+  'text-xl': 28,    // 1.75rem
+  'text-2xl': 32,   // 2rem
+  'text-3xl': 36,   // 2.25rem
+  'text-4xl': 40,   // 2.5rem
+  'text-5xl': 48,   // 1 (leading-none)
+}
+
+export function resolveAstConstants(tailwind?: TailwindConfig): AstConstants {
+  return {
+    fontSizePx: { ...DEFAULT_FONT_SIZE_PX, ...tailwind?.fontSizePx },
+    leading: { ...DEFAULT_LEADING, ...tailwind?.leading },
+    pairedLineHeightPx: { ...DEFAULT_PAIRED_LINE_HEIGHT_PX, ...tailwind?.pairedLineHeightPx },
+    spacingUnit: tailwind?.spacingUnit ?? 4,
+    textLengthThreshold: tailwind?.textLengthThreshold ?? 80,
+  }
+}
 
 // --- Class filtering ---
 
@@ -93,83 +136,57 @@ function getTagName(node: Node): string {
 
 // --- Tailwind typography helpers (AST-only path) ---
 
-const TAILWIND_FONT_SIZE_PX: Record<string, number> = {
-  'text-xs': 12, 'text-sm': 14, 'text-base': 16, 'text-lg': 18,
-  'text-xl': 20, 'text-2xl': 24, 'text-3xl': 30, 'text-4xl': 36, 'text-5xl': 48,
-}
-
 // Returns the first text-size class found in `classes`, or empty string.
-function extractTextSizeClass(classes: string): string {
-  return classes.split(/\s+/).find(c => c in TAILWIND_FONT_SIZE_PX) ?? ''
+function extractTextSizeClass(classes: string, constants: AstConstants): string {
+  return classes.split(/\s+/).find(c => c in constants.fontSizePx) ?? ''
 }
 
 // Returns font size in px. Falls back to `inheritedTextClass` before the 16px default.
-function tailwindFontSizePx(classes: string, inheritedTextClass = ''): number {
-  for (const cls of Object.keys(TAILWIND_FONT_SIZE_PX)) {
-    if (classes.includes(cls)) return TAILWIND_FONT_SIZE_PX[cls]!
+function tailwindFontSizePx(classes: string, inheritedTextClass: string, constants: AstConstants): number {
+  for (const cls of Object.keys(constants.fontSizePx)) {
+    if (classes.includes(cls)) return constants.fontSizePx[cls]!
   }
-  if (inheritedTextClass && inheritedTextClass in TAILWIND_FONT_SIZE_PX) {
-    return TAILWIND_FONT_SIZE_PX[inheritedTextClass]!
+  if (inheritedTextClass && inheritedTextClass in constants.fontSizePx) {
+    return constants.fontSizePx[inheritedTextClass]!
   }
   return 16
 }
 
-const TAILWIND_LEADING: Record<string, number> = {
-  'leading-none': 1, 'leading-tight': 1.25, 'leading-snug': 1.375,
-  'leading-normal': 1.5, 'leading-relaxed': 1.625, 'leading-loose': 2,
-}
-
-// Tailwind's built-in line-heights that are bundled with each font-size utility.
-// These are the effective line-heights when no `leading-*` class is present.
-// Source: https://tailwindcss.com/docs/font-size
-const TAILWIND_PAIRED_LINE_HEIGHT_PX: Record<string, number> = {
-  'text-xs': 16,    // 1rem
-  'text-sm': 20,    // 1.25rem
-  'text-base': 24,  // 1.5rem
-  'text-lg': 28,    // 1.75rem
-  'text-xl': 28,    // 1.75rem
-  'text-2xl': 32,   // 2rem
-  'text-3xl': 36,   // 2.25rem
-  'text-4xl': 40,   // 2.5rem
-  'text-5xl': 48,   // 1 (leading-none)
-}
-
-function tailwindLeadingMultiplier(classes: string, inheritedTextClass = ''): number {
-  for (const cls of Object.keys(TAILWIND_LEADING)) {
-    if (classes.includes(cls)) return TAILWIND_LEADING[cls]!
+function tailwindLeadingMultiplier(classes: string, inheritedTextClass: string, constants: AstConstants): number {
+  for (const cls of Object.keys(constants.leading)) {
+    if (classes.includes(cls)) return constants.leading[cls]!
   }
   // No explicit leading-* class: use Tailwind's paired line-height for the font-size utility.
   // This is critical for layout stability — spans without leading-* use the paired default,
   // not a generic 1.5 multiplier.
-  const textClass = extractTextSizeClass(classes) || inheritedTextClass
-  if (textClass && textClass in TAILWIND_PAIRED_LINE_HEIGHT_PX) {
-    return TAILWIND_PAIRED_LINE_HEIGHT_PX[textClass]! / TAILWIND_FONT_SIZE_PX[textClass]!
+  const textClass = extractTextSizeClass(classes, constants) || inheritedTextClass
+  if (textClass && textClass in constants.pairedLineHeightPx) {
+    return constants.pairedLineHeightPx[textClass]! / constants.fontSizePx[textClass]!
   }
   return 1.5
 }
 
 // Emit Sk.Heading with height derived from Tailwind classes.
-function headingFromClasses(classes: string, depth: number, inheritedTextClass = ''): string {
+function headingFromClasses(classes: string, depth: number, constants: AstConstants, inheritedTextClass = ''): string {
   const i = ind(depth)
-  const fontSizePx = tailwindFontSizePx(classes, inheritedTextClass)
-  const heightPx = Math.round(fontSizePx * tailwindLeadingMultiplier(classes))
+  const fontSizePx = tailwindFontSizePx(classes, inheritedTextClass, constants)
+  const heightPx = Math.round(fontSizePx * tailwindLeadingMultiplier(classes, inheritedTextClass, constants))
   return `${i}<Sk.Heading height="${heightPx}px" />`
 }
 
 // Emit Sk.Text with height/lineHeight/lines derived from Tailwind classes.
 // <p> tags default to lines={2} unless staticText is provided and short enough to be single-line.
 // inheritedTextClass: closest ancestor's text-size class, used when the element has none.
-function textFromClasses(tag: string, classes: string, depth: number, spacingClasses = '', inheritedTextClass = '', staticText?: string): string {
+function textFromClasses(tag: string, classes: string, depth: number, constants: AstConstants, spacingClasses = '', inheritedTextClass = '', staticText?: string): string {
   const i = ind(depth)
-  const fontSizePx = tailwindFontSizePx(classes, inheritedTextClass)
-  const lhMul = tailwindLeadingMultiplier(classes, inheritedTextClass)
+  const fontSizePx = tailwindFontSizePx(classes, inheritedTextClass, constants)
+  const lhMul = tailwindLeadingMultiplier(classes, inheritedTextClass, constants)
   const lineHeightPx = Math.round(fontSizePx * lhMul)
   const clsAttr = spacingClasses ? ` className="${spacingClasses}"` : ''
 
   if (tag === 'p') {
     // Use lines=1 if we have short static text (fits on one line); otherwise assume multi-line.
-    // Threshold of 80 chars covers typical card widths at sm/base font sizes.
-    const lines = (staticText !== undefined && staticText.length < 80) ? 1 : 2
+    const lines = (staticText !== undefined && staticText.length < constants.textLengthThreshold) ? 1 : 2
     if (lines === 1) {
       return `${i}<Sk.Text${clsAttr} height="${fontSizePx}px" lineHeight="${lineHeightPx}px" />`
     }
@@ -237,10 +254,10 @@ function isAvatarDiv(tag: string, classes: string): boolean {
     /\bh-\d+\b/.test(classes)
 }
 
-function tailwindToPx(classes: string, axis: 'w' | 'h'): number {
+function tailwindToPx(classes: string, axis: 'w' | 'h', constants: AstConstants): number {
   const match = classes.match(new RegExp(`\\b${axis}-(\\d+)\\b`))
   if (!match?.[1]) return 40
-  return parseInt(match[1]) * 4
+  return parseInt(match[1]) * constants.spacingUnit
 }
 
 function isHeadingTag(tag: string): boolean {
@@ -328,7 +345,7 @@ function ind(depth: number): string {
   return '  '.repeat(depth + 2) // +2 for base indentation inside return (...)
 }
 
-function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = false, inheritedTextClass = ''): string {
+function walkChild(node: Node, sf: SourceFile, depth: number, constants: AstConstants, parentIsFlex = false, inheritedTextClass = ''): string {
   const k = node.getKind()
 
   if (k === SyntaxKind.JsxText) return ''
@@ -336,7 +353,7 @@ function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = fal
   if (k === SyntaxKind.JsxFragment) {
     return node.asKind(SyntaxKind.JsxFragment)!
       .getJsxChildren()
-      .map(c => walkChild(c, sf, depth, parentIsFlex, inheritedTextClass))
+      .map(c => walkChild(c, sf, depth, constants, parentIsFlex, inheritedTextClass))
       .filter(Boolean)
       .join('\n')
   }
@@ -344,13 +361,13 @@ function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = fal
   if (k === SyntaxKind.JsxExpression) {
     const expr = node.asKind(SyntaxKind.JsxExpression)?.getExpression()
     if (!expr) return ''
-    return walkExpr(expr, sf, depth, inheritedTextClass)
+    return walkExpr(expr, sf, depth, constants, inheritedTextClass)
   }
 
   if (k === SyntaxKind.JsxSelfClosingElement) {
     const tag = node.asKind(SyntaxKind.JsxSelfClosingElement)!.getTagNameNode().getText()
     const classes = getClassFromOpeningOrSelfClosing(node)
-    return classifyLeaf(tag, classes, depth, inheritedTextClass)
+    return classifyLeaf(tag, classes, depth, constants, inheritedTextClass)
   }
 
   if (k === SyntaxKind.JsxElement) {
@@ -358,20 +375,20 @@ function walkChild(node: Node, sf: SourceFile, depth: number, parentIsFlex = fal
     const tag = el.getOpeningElement().getTagNameNode().getText()
     const classes = getClassFromOpeningOrSelfClosing(el.getOpeningElement())
     const children = el.getJsxChildren()
-    return classifyNode(tag, classes, children, sf, depth, parentIsFlex, inheritedTextClass)
+    return classifyNode(tag, classes, children, sf, depth, constants, parentIsFlex, inheritedTextClass)
   }
 
   return ''
 }
 
-function classifyLeaf(tag: string, classes: string, depth: number, inheritedTextClass = ''): string {
+function classifyLeaf(tag: string, classes: string, depth: number, constants: AstConstants, inheritedTextClass = ''): string {
   const i = ind(depth)
   if (tag === 'img') return `${i}<Sk.Image />`
   if (tag === 'button') return `${i}<Sk.Button />`
-  if (isHeadingTag(tag)) return headingFromClasses(classes, depth, inheritedTextClass)
-  if (isAvatarDiv(tag, classes)) return `${i}<Sk.Avatar size={${tailwindToPx(classes, 'w')}} />`
+  if (isHeadingTag(tag)) return headingFromClasses(classes, depth, constants, inheritedTextClass)
+  if (isAvatarDiv(tag, classes)) return `${i}<Sk.Avatar size={${tailwindToPx(classes, 'w', constants)}} />`
   if (isNumberLike(tag, classes)) return `${i}<Sk.Number />`
-  if (isTextTag(tag)) return textFromClasses(tag, classes, depth, '', inheritedTextClass)
+  if (isTextTag(tag)) return textFromClasses(tag, classes, depth, constants, '', inheritedTextClass)
   return ''
 }
 
@@ -381,13 +398,14 @@ function classifyNode(
   children: Node[],
   sf: SourceFile,
   depth: number,
+  constants: AstConstants,
   parentIsFlex = false,
   inheritedTextClass = '',
 ): string {
   const i = ind(depth)
 
-  if (isAvatarDiv(tag, classes)) return `${i}<Sk.Avatar size={${tailwindToPx(classes, 'w')}} />`
-  if (isHeadingTag(tag)) return headingFromClasses(classes, depth, inheritedTextClass)
+  if (isAvatarDiv(tag, classes)) return `${i}<Sk.Avatar size={${tailwindToPx(classes, 'w', constants)}} />`
+  if (isHeadingTag(tag)) return headingFromClasses(classes, depth, constants, inheritedTextClass)
   if (tag === 'button') return `${i}<Sk.Button />`
   if (tag === 'img') return `${i}<Sk.Image />`
 
@@ -401,7 +419,7 @@ function classifyNode(
   if (classes.includes('bg-gradient-') && tag === 'div') {
     const hMatch = classes.match(/\bh-(\d+)\b/)
     if (hMatch?.[1]) {
-      const heightPx = parseInt(hMatch[1]) * 4
+      const heightPx = parseInt(hMatch[1]) * constants.spacingUnit
       return `${i}<Sk.Image width="100%" height={${heightPx}} />`
     }
   }
@@ -410,19 +428,19 @@ function classifyNode(
     if (isNumberLike(tag, classes)) return `${i}<Sk.Number />`
     const spacing = extractSpacingClasses(classes)
     const staticText = tag === 'p' ? extractStaticText(children, sf) ?? undefined : undefined
-    return textFromClasses(tag, classes, depth, spacing, inheritedTextClass, staticText)
+    return textFromClasses(tag, classes, depth, constants, spacing, inheritedTextClass, staticText)
   }
 
   if (tag === 'ul' || tag === 'ol') return `${i}<Sk.List />`
 
   // Pass down the closest text-size class so child text elements without
   // their own text-size class can inherit the correct font size.
-  const ownTextClass = extractTextSizeClass(classes)
+  const ownTextClass = extractTextSizeClass(classes, constants)
   const childInheritedTextClass = ownTextClass || inheritedTextClass
 
   const thisIsFlex = classes.includes('flex')
   const childLines = children
-    .map(c => walkChild(c, sf, depth + 1, thisIsFlex, childInheritedTextClass))
+    .map(c => walkChild(c, sf, depth + 1, constants, thisIsFlex, childInheritedTextClass))
     .filter(s => s.trim())
 
   if (childLines.length === 0) return ''
@@ -444,7 +462,7 @@ function classifyNode(
   return [`${i}<${tag}${clsAttr}>`, ...childLines, `${i}</${tag}>`].join('\n')
 }
 
-function walkExpr(expr: Node, sf: SourceFile, depth: number, inheritedTextClass = ''): string {
+function walkExpr(expr: Node, sf: SourceFile, depth: number, constants: AstConstants, inheritedTextClass = ''): string {
   // arr.map(item => <JSX />) — render template N times
   if (expr.getKind() === SyntaxKind.CallExpression) {
     const call = expr.asKind(SyntaxKind.CallExpression)!
@@ -484,7 +502,7 @@ function walkExpr(expr: Node, sf: SourceFile, depth: number, inheritedTextClass 
 
       const arrayVarPath = callText.slice(0, -4) // remove '.map'
       const count = resolveArrayLength(sf, arrayVarPath) ?? 1
-      const template = walkChild(jsxNode, sf, depth, false, inheritedTextClass)
+      const template = walkChild(jsxNode, sf, depth, constants, false, inheritedTextClass)
       if (!template.trim()) return ''
 
       return Array(count).fill(template).join('\n')
@@ -494,7 +512,7 @@ function walkExpr(expr: Node, sf: SourceFile, depth: number, inheritedTextClass 
   // cond ? <A /> : <B /> — use truthy branch
   if (expr.getKind() === SyntaxKind.ConditionalExpression) {
     const truthy = expr.asKind(SyntaxKind.ConditionalExpression)!.getWhenTrue()
-    return walkChild(truthy, sf, depth, false, inheritedTextClass)
+    return walkChild(truthy, sf, depth, constants, false, inheritedTextClass)
   }
 
   return ''
@@ -531,6 +549,7 @@ function classifyLeafWithGeo(
   geo: ExtractedChildGeometry,
   parentWidth: number,
   depth: number,
+  constants: AstConstants,
 ): string {
   const i = ind(depth)
   const w = geo.boundingBox.width
@@ -556,7 +575,7 @@ function classifyLeafWithGeo(
     return `${i}<Sk.Avatar size={${size}} />`
   }
   if (isAvatarDiv(tag, classes)) {
-    const size = Math.round(w) || tailwindToPx(classes, 'w')
+    const size = Math.round(w) || tailwindToPx(classes, 'w', constants)
     return `${i}<Sk.Avatar size={${size}} />`
   }
 
@@ -630,6 +649,7 @@ function walkChildWithGeo(
   geoRef: GeoRef,
   parentWidth: number,
   depth: number,
+  constants: AstConstants,
   parentIsFlex = false,
 ): string {
   const k = node.getKind()
@@ -639,7 +659,7 @@ function walkChildWithGeo(
   if (k === SyntaxKind.JsxFragment) {
     return node.asKind(SyntaxKind.JsxFragment)!
       .getJsxChildren()
-      .map(c => walkChildWithGeo(c, sf, geoSiblings, geoRef, parentWidth, depth, parentIsFlex))
+      .map(c => walkChildWithGeo(c, sf, geoSiblings, geoRef, parentWidth, depth, constants, parentIsFlex))
       .filter(Boolean)
       .join('\n')
   }
@@ -647,7 +667,7 @@ function walkChildWithGeo(
   if (k === SyntaxKind.JsxExpression) {
     const expr = node.asKind(SyntaxKind.JsxExpression)?.getExpression()
     if (!expr) return ''
-    return walkExprWithGeo(expr, sf, geoSiblings, geoRef, parentWidth, depth)
+    return walkExprWithGeo(expr, sf, geoSiblings, geoRef, parentWidth, depth, constants)
   }
 
   // Consume one geo sibling for this element
@@ -658,8 +678,8 @@ function walkChildWithGeo(
     const tag = node.asKind(SyntaxKind.JsxSelfClosingElement)!.getTagNameNode().getText()
     const classes = getClassFromOpeningOrSelfClosing(node)
     return geo
-      ? classifyLeafWithGeo(tag, classes, geo, parentWidth, depth)
-      : classifyLeaf(tag, classes, depth)
+      ? classifyLeafWithGeo(tag, classes, geo, parentWidth, depth, constants)
+      : classifyLeaf(tag, classes, depth, constants)
   }
 
   if (k === SyntaxKind.JsxElement) {
@@ -668,8 +688,8 @@ function walkChildWithGeo(
     const classes = getClassFromOpeningOrSelfClosing(el.getOpeningElement())
     const children = el.getJsxChildren()
     return geo
-      ? classifyNodeWithGeo(tag, classes, children, geo, sf, parentWidth, depth, parentIsFlex)
-      : classifyNode(tag, classes, children, sf, depth, parentIsFlex)
+      ? classifyNodeWithGeo(tag, classes, children, geo, sf, parentWidth, depth, constants, parentIsFlex)
+      : classifyNode(tag, classes, children, sf, depth, constants, parentIsFlex)
   }
 
   return ''
@@ -683,6 +703,7 @@ function classifyNodeWithGeo(
   sf: SourceFile,
   parentWidth: number,
   depth: number,
+  constants: AstConstants,
   parentIsFlex = false,
 ): string {
   const i = ind(depth)
@@ -702,7 +723,7 @@ function classifyNodeWithGeo(
     return `${i}<Sk.Avatar size={${size}} />`
   }
   if (isAvatarDiv(tag, classes)) {
-    const size = Math.round(w) || tailwindToPx(classes, 'w')
+    const size = Math.round(w) || tailwindToPx(classes, 'w', constants)
     return `${i}<Sk.Avatar size={${size}} />`
   }
 
@@ -724,7 +745,7 @@ function classifyNodeWithGeo(
   }
 
   if (isTextTag(tag) && hasOnlyInlineChildren(children)) {
-    return classifyLeafWithGeo(tag, classes, geo, parentWidth, depth)
+    return classifyLeafWithGeo(tag, classes, geo, parentWidth, depth, constants)
   }
 
   if (tag === 'ul' || tag === 'ol') return `${i}<Sk.List />`
@@ -733,7 +754,7 @@ function classifyNodeWithGeo(
   const thisIsFlex = classes.includes('flex')
   const childRef: GeoRef = { i: 0 }
   const childLines = children
-    .map(c => walkChildWithGeo(c, sf, geo.children, childRef, w, depth + 1, thisIsFlex))
+    .map(c => walkChildWithGeo(c, sf, geo.children, childRef, w, depth + 1, constants, thisIsFlex))
     .filter(s => s.trim())
 
   if (childLines.length === 0) {
@@ -768,6 +789,7 @@ function walkExprWithGeo(
   geoRef: GeoRef,
   parentWidth: number,
   depth: number,
+  constants: AstConstants,
 ): string {
   if (expr.getKind() === SyntaxKind.CallExpression) {
     const call = expr.asKind(SyntaxKind.CallExpression)!
@@ -791,7 +813,7 @@ function walkExprWithGeo(
         const itemGeo = geoSiblings[geoRef.i + k]
         if (!itemGeo) {
           // Fall back to no-geo for remaining items
-          const template = walkChild(jsxNode, sf, depth)
+          const template = walkChild(jsxNode, sf, depth, constants)
           if (template.trim()) parts.push(template)
         } else {
           const inner = classifyNodeWithGeo(
@@ -804,6 +826,7 @@ function walkExprWithGeo(
             sf,
             parentWidth,
             depth,
+            constants,
             false,
           )
           if (inner.trim()) parts.push(inner)
@@ -816,7 +839,7 @@ function walkExprWithGeo(
 
   if (expr.getKind() === SyntaxKind.ConditionalExpression) {
     const truthy = expr.asKind(SyntaxKind.ConditionalExpression)!.getWhenTrue()
-    return walkChildWithGeo(truthy, sf, geoSiblings, geoRef, parentWidth, depth)
+    return walkChildWithGeo(truthy, sf, geoSiblings, geoRef, parentWidth, depth, constants)
   }
 
   return ''
@@ -827,7 +850,9 @@ function walkExprWithGeo(
 export function generateSkeletonBodyFromSource(
   sourceFilePath: string,
   componentName: string,
+  constants?: AstConstants,
 ): string | null {
+  const c = constants ?? resolveAstConstants()
   try {
     const project = new Project({
       useInMemoryFileSystem: false,
@@ -870,7 +895,7 @@ export function generateSkeletonBodyFromSource(
 
     if (!jsxRoot) return null
 
-    const result = walkChild(jsxRoot, sf, 0)
+    const result = walkChild(jsxRoot, sf, 0, c)
     return result.trim() ? result : null
   } catch {
     return null
@@ -881,8 +906,10 @@ export function generateSkeletonBodyWithGeometry(
   sourceFilePath: string,
   componentName: string,
   geometry: ExtractedGeometry,
+  constants?: AstConstants,
 ): string | null {
-  if (geometry.timedOut) return generateSkeletonBodyFromSource(sourceFilePath, componentName)
+  const c = constants ?? resolveAstConstants()
+  if (geometry.timedOut) return generateSkeletonBodyFromSource(sourceFilePath, componentName, c)
 
   try {
     const project = new Project({
@@ -939,9 +966,9 @@ export function generateSkeletonBodyWithGeometry(
       : []
 
     // parentWidth for root = its own width (no outer reference available)
-    const result = classifyNodeWithGeo(tag, classes, children, rootGeo, sf, rootGeo.boundingBox.width, 0)
+    const result = classifyNodeWithGeo(tag, classes, children, rootGeo, sf, rootGeo.boundingBox.width, 0, c)
     return result.trim() ? result : null
   } catch {
-    return generateSkeletonBodyFromSource(sourceFilePath, componentName)
+    return generateSkeletonBodyFromSource(sourceFilePath, componentName, c)
   }
 }

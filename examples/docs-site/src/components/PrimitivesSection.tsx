@@ -21,6 +21,9 @@ export function PrimitivesSection() {
           <code className="text-slate-300 text-sm font-mono">.skeleton.tsx</code> files
           and available for manual use via{' '}
           <code className="text-slate-300 text-sm font-mono">{'import { Sk } from \'skeletal-ui\''}</code>.
+          {' '}All prop defaults are configurable via the{' '}
+          <code className="text-slate-300 text-sm font-mono">primitives</code> config key
+          or <code className="text-slate-300 text-sm font-mono">SkeletonProvider</code>.
         </p>
         <div className="rounded-xl border border-slate-800 overflow-hidden">
           <table className="w-full text-sm">
