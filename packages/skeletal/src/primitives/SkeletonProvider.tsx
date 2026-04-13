@@ -1,9 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react'
+import type { PrimitivesConfig } from '../config/types.js'
+import { SkeletalContext } from './context.js'
 
 export interface SkeletonProviderProps {
   color?: string
   radius?: number
   duration?: number
+  primitives?: PrimitivesConfig
   children: ReactNode
 }
 
@@ -11,6 +14,7 @@ export function SkeletonProvider({
   color,
   radius,
   duration,
+  primitives,
   children,
 }: SkeletonProviderProps) {
   const style: CSSProperties & Record<string, string> = {}
@@ -19,8 +23,10 @@ export function SkeletonProvider({
   if (duration !== undefined) style['--sk-duration'] = `${duration}s`
 
   return (
-    <div style={style}>
-      {children}
-    </div>
+    <SkeletalContext.Provider value={{ primitives }}>
+      <div style={style}>
+        {children}
+      </div>
+    </SkeletalContext.Provider>
   )
 }

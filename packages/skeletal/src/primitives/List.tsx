@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useSkeletalContext } from './context.js'
 
 export interface ListProps {
   count?: number
@@ -7,14 +8,18 @@ export interface ListProps {
   className?: string
 }
 
-export function List({ count = 3, gap = 12, renderItem, className }: ListProps) {
+export function List({ count, gap, renderItem, className }: ListProps) {
+  const ctx = useSkeletalContext()
+  const resolvedCount = count ?? ctx.primitives?.list?.count ?? 3
+  const resolvedGap = gap ?? ctx.primitives?.list?.gap ?? 12
+
   return (
     <span
-      style={{ display: 'flex', flexDirection: 'column', gap }}
+      style={{ display: 'flex', flexDirection: 'column', gap: resolvedGap }}
       className={className}
       aria-hidden="true"
     >
-      {Array.from({ length: count }).map((_, i) => (
+      {Array.from({ length: resolvedCount }).map((_, i) => (
         <span key={i}>
           {renderItem ? renderItem() : null}
         </span>

@@ -7,6 +7,44 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.8.0] — 2026-04-13
+
+### Added
+
+- **User-configurable sizes and constants** — three new optional config namespaces in `skeletal.config.ts`: `tailwind`, `classifier`, and `primitives`. All keys are optional and deep-merged with built-in defaults; existing configs parse without changes.
+
+- **`tailwind` config namespace** — overrides the Tailwind font-size/line-height tables used during AST analysis. Keys: `fontSizePx` (map of class → px), `leading` (map of class → multiplier), `pairedLineHeightPx` (map of class → paired line-height px), `spacingUnit` (px per Tailwind spacing unit, default `4`), `textLengthThreshold` (char threshold for single-line `<p>` detection, default `80`). Useful for Tailwind v4 configs, custom theme extensions, or non-standard spacing scales.
+
+- **`classifier` config namespace** — overrides geometry thresholds used to classify Playwright-measured DOM elements. Keys: `lineHeightEstimate`, `avatarSmallMax`, `iconMax`, `avatarMediumMax`, `badgeMaxHeight`, `badgeMaxWidth`, `textSingleLineMaxHeight`, `textMultiLineMinWidthRatio`, `imageMinDimension`, `imageAspectRatioMin`, `imageAspectRatioMax`. Useful when a design system uses dimensions outside the defaults (e.g. compact avatars, tall badges).
+
+- **`primitives` config namespace** — overrides default prop values for all `Sk.*` components. Affects both code generation (generated files omit props that match the new default, keeping output clean) and runtime rendering (components read defaults from context when no explicit prop is passed). Per-component keys: `avatar`, `icon`, `button`, `badge`, `text`, `heading`, `image`, `card`, `list`, `defaultPulseSkeleton`.
+
+- **`SkeletonProvider` — `primitives` prop** — runtime equivalent of the `primitives` config namespace. Wraps children with a React context so all `Sk.*` components in the subtree pick up the overridden defaults without any prop drilling.
+
+- **`primitives/context.ts`** — new internal module exporting `SkeletalContext` and `useSkeletalContext`. All `Sk.*` primitives read from it; `SkeletonProvider` writes to it. Avoids circular imports between provider and primitives.
+
+- **`resolveAstConstants(tailwind?)` factory** — exported from `ast-skeleton-generator`. Merges user `TailwindConfig` with built-in defaults; returned `AstConstants` object is threaded through all ~14 internal AST analysis helpers.
+
+- **`resolveClassifierThresholds(cfg?)` factory** — exported from `classifier/rules`. Merges user `ClassifierConfig` with built-in defaults; returned `ClassifierThresholds` object is passed to `buildClassificationRules` and threaded through element classification.
+
+- **`buildClassificationRules(thresholds)` factory** — replaces the static `CLASSIFICATION_RULES` array. Tag and geometry rules are now closures that read from the `thresholds` parameter instead of module-level constants.
+
+- **`AstConstants`, `TailwindConfig`, `ClassifierConfig`, `PrimitivesConfig`** — new exported types for user autocomplete in `skeletal.config.ts` and `SkeletonProvider`.
+
+- **Codegen default-elision** — `printSkeletonTree` / `printElement` accept an optional `primitivesConfig` and omit emitting props whose value equals the effective default (built-in or user-overridden). Keeps generated `.skeleton.tsx` files clean when primitive defaults are customised.
+
+- **3 new codegen tests** — cover default-elision for `Text width="100%"`, `Avatar size={40}/shape="circle"`, and `primitivesConfig`-overridden defaults.
+
+### Changed
+
+- **All `Sk.*` primitives** — removed hardcoded default parameter values; props are now resolved via three-layer lookup: explicit prop → `SkeletonProvider` context → hardcoded default. Behaviour is identical when no `primitives` config or context is present.
+- **`classify(geometry, thresholds?)`** — second parameter added; resolves and uses `buildClassificationRules` internally.
+- **`generateSkeletonBodyFromSource` / `generateSkeletonBodyWithGeometry`** — optional `constants?: AstConstants` last parameter added; defaults to `resolveAstConstants()` when omitted.
+- **`generateSkeleton`** — optional `primitivesConfig?: PrimitivesConfig` last parameter added; forwarded to `printSkeletonTree`.
+- **`analyze` command** — resolves `astConstants` and `classifierThresholds` from config once at startup and threads them to all generation call sites.
+
+---
+
 ## [0.7.0] — 2026-04-12
 
 ### Changed
@@ -115,6 +153,7 @@ Initial release.
 - AST hash staleness detection (`skeletal:hash` header comment).
 - `skeletal.config.ts` with `defineConfig()` and Zod schema validation.
 
+[0.8.0]: https://github.com/web-scavenger/skeletal/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/web-scavenger/skeletal/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/web-scavenger/skeletal/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/web-scavenger/skeletal/compare/v0.2.0...v0.5.0

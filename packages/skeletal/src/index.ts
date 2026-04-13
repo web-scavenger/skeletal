@@ -15,7 +15,7 @@ export { lazyWithSkeleton } from './runtime/lazy-with-skeleton.js'
 
 // Config
 export { defineConfig } from './config/define-config.js'
-export type { SkeletalConfig, RouteConfig } from './config/types.js'
+export type { SkeletalConfig, RouteConfig, TailwindConfig, ClassifierConfig, PrimitivesConfig } from './config/types.js'
 
 // Sk.* namespace
 import { Text } from './primitives/Text.js'

@@ -4,6 +4,7 @@ import { ok, err, ERROR_CODES } from '../errors.js'
 import type { Result, SkeletalError } from '../errors.js'
 import type { SkeletalCandidate } from '../ast-scanner/types.js'
 import type { SkeletonTree } from '../classifier/types.js'
+import type { PrimitivesConfig } from '../config/types.js'
 import type { Logger } from '../logger.js'
 import { printSkeletonTree } from './printer.js'
 import type { GeneratedFile } from './types.js'
@@ -49,10 +50,11 @@ function validateTypeScript(content: string, componentName: string): boolean {
 function buildSkeletonContent(
   candidate: SkeletalCandidate,
   tree: SkeletonTree,
+  primitivesConfig?: PrimitivesConfig,
 ): string {
   const { name, astHash, pattern } = candidate
   const skeletonName = `${name}Skeleton`
-  const body = printSkeletonTree(tree, 2)
+  const body = printSkeletonTree(tree, 2, primitivesConfig)
 
   return [
     `// skeletal:hash:${astHash}`,
@@ -150,8 +152,9 @@ export function generateSkeleton(
   tree: SkeletonTree,
   outputPath: string,
   logger: Logger,
+  primitivesConfig?: PrimitivesConfig,
 ): Result<GeneratedFile, SkeletalError> {
-  const content = buildSkeletonContent(candidate, tree)
+  const content = buildSkeletonContent(candidate, tree, primitivesConfig)
   const skeletonName = `${candidate.name}Skeleton`
 
   // Validate generated TypeScript is parseable

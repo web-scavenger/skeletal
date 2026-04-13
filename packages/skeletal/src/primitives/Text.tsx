@@ -1,3 +1,5 @@
+import { useSkeletalContext } from './context.js'
+
 export interface TextProps {
   lines?: number
   lastLineWidth?: string
@@ -9,18 +11,22 @@ export interface TextProps {
 }
 
 export function Text({
-  lines = 1,
-  lastLineWidth = '60%',
-  width = '100%',
+  lines,
+  lastLineWidth,
+  width,
   height,
   lineHeight,
   gap,
   className,
 }: TextProps) {
-  const barHeight = height ?? '1em'
-  const lineGap = gap ?? '0.4em'
+  const ctx = useSkeletalContext()
+  const resolvedLines = lines ?? ctx.primitives?.text?.lines ?? 1
+  const resolvedLastLineWidth = lastLineWidth ?? ctx.primitives?.text?.lastLineWidth ?? '60%'
+  const resolvedWidth = width ?? '100%'
+  const barHeight = height ?? ctx.primitives?.text?.height ?? '1em'
+  const lineGap = gap ?? ctx.primitives?.text?.gap ?? '0.4em'
 
-  if (lines === 1) {
+  if (resolvedLines === 1) {
     if (lineHeight) {
       // Outer wrapper matches real bounding box height (no layout jump).
       // Inner bar matches font-size (visually natural thin bar).
@@ -29,7 +35,7 @@ export function Text({
       return (
         <span
           className={className}
-          style={{ display: 'flex', alignItems: 'center', height: lineHeight, width }}
+          style={{ display: 'flex', alignItems: 'center', height: lineHeight, width: resolvedWidth }}
           aria-hidden="true"
         >
           <span
@@ -42,7 +48,7 @@ export function Text({
     return (
       <span
         className={`sk-base${className ? ` ${className}` : ''}`}
-        style={{ display: 'block', width, height: barHeight }}
+        style={{ display: 'block', width: resolvedWidth, height: barHeight }}
         aria-hidden="true"
       />
     )
@@ -55,13 +61,13 @@ export function Text({
       style={{ display: 'flex', flexDirection: 'column', gap: lineGap }}
       aria-hidden="true"
     >
-      {Array.from({ length: lines }).map((_, i) => (
+      {Array.from({ length: resolvedLines }).map((_, i) => (
         <span
           key={i}
           className="sk-base"
           style={{
             display: 'block',
-            width: i === lines - 1 ? lastLineWidth : width,
+            width: i === resolvedLines - 1 ? resolvedLastLineWidth : resolvedWidth,
             height: barHeight,
           }}
         />

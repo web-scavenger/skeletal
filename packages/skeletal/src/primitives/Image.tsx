@@ -1,3 +1,5 @@
+import { useSkeletalContext } from './context.js'
+
 export interface ImageProps {
   width?: string | number
   height?: string | number
@@ -6,19 +8,23 @@ export interface ImageProps {
 }
 
 export function Image({
-  width = '100%',
+  width,
   height,
-  aspectRatio = '16/9',
+  aspectRatio,
   className,
 }: ImageProps) {
+  const ctx = useSkeletalContext()
+  const resolvedWidth = width ?? '100%'
+  const resolvedAspectRatio = aspectRatio ?? ctx.primitives?.image?.aspectRatio ?? '16/9'
+
   return (
     <span
       className={`sk-base${className ? ` ${className}` : ''}`}
       style={{
         display: 'block',
-        width,
+        width: resolvedWidth,
         height: height ?? undefined,
-        aspectRatio: height === undefined ? aspectRatio : undefined,
+        aspectRatio: height === undefined ? resolvedAspectRatio : undefined,
       }}
       aria-hidden="true"
     />

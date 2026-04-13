@@ -8,11 +8,13 @@ import { classify } from '../../classifier/classifier.js'
 import { generateSkeleton, generateSkeletonFromBody } from '../../codegen/generator.js'
 import { applyCodemod } from '../../codemod/apply.js'
 import { injectDataSk } from '../../marker-injector/transform.js'
-import { generateSkeletonBodyFromSource, generateSkeletonBodyWithGeometry } from '../../ast-skeleton-generator/index.js'
+import { generateSkeletonBodyFromSource, generateSkeletonBodyWithGeometry, resolveAstConstants } from '../../ast-skeleton-generator/index.js'
+import { resolveClassifierThresholds } from '../../classifier/rules.js'
 import { createLogger } from '../../logger.js'
 import { Project } from 'ts-morph'
 import type { SkeletalCandidate } from '../../ast-scanner/types.js'
 import type { SkeletalConfig } from '../../config/types.js'
+import type { AstConstants } from '../../ast-skeleton-generator/index.js'
 import type { Logger } from '../../logger.js'
 
 export interface AnalyzeContext {
@@ -68,9 +70,12 @@ export async function runAnalyze(options: {
     return
   }
 
+  const astConstants = resolveAstConstants(config.tailwind)
+  const classifierThresholds = resolveClassifierThresholds(config.classifier)
+
   if (noBrowser) {
     clack.log.info('Skipping browser crawl (--no-browser). Generating minimal skeletons.')
-    await generateMinimalSkeletons(candidates, config, projectRoot, dryRun, logger)
+    await generateMinimalSkeletons(candidates, config, projectRoot, dryRun, logger, astConstants)
     clack.outro('Done.')
     return
   }
@@ -146,10 +151,10 @@ export async function runAnalyze(options: {
     const outputPath = candidate.sourceFile.replace(/\.(js|tsx?|jsx?)$/, '') + '.skeleton.tsx'
 
     // AST structure + Playwright geometry for real sizes
-    const astBody = generateSkeletonBodyWithGeometry(candidate.sourceFile, candidate.name, geometry)
+    const astBody = generateSkeletonBodyWithGeometry(candidate.sourceFile, candidate.name, geometry, astConstants)
     const genResult = astBody !== null
       ? generateSkeletonFromBody(candidate, astBody, outputPath, logger)
-      : generateSkeleton(candidate, classify(geometry), outputPath, logger)
+      : generateSkeleton(candidate, classify(geometry, classifierThresholds), outputPath, logger, config.primitives)
     if (genResult.isErr()) {
       logger.error(`Codegen failed for ${candidate.name}: ${genResult.error.message}`)
       failed++
@@ -201,6 +206,7 @@ async function generateMinimalSkeletons(
   projectRoot: string,
   dryRun: boolean,
   logger: Logger,
+  astConstants: AstConstants,
 ): Promise<void> {
   const project = new Project({
     tsConfigFilePath: resolve(projectRoot, 'tsconfig.json'),
@@ -211,7 +217,7 @@ async function generateMinimalSkeletons(
     const outputPath = candidate.sourceFile.replace(/\.(js|tsx?|jsx?)$/, '') + '.skeleton.tsx'
 
     // Try AST-based generation first; fall back to minimal card
-    const astBody = generateSkeletonBodyFromSource(candidate.sourceFile, candidate.name)
+    const astBody = generateSkeletonBodyFromSource(candidate.sourceFile, candidate.name, astConstants)
     const genResult = astBody !== null
       ? generateSkeletonFromBody(candidate, astBody, outputPath, logger)
       : generateSkeleton(candidate, [{
