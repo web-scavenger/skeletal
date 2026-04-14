@@ -1,0 +1,55 @@
+---
+title: check
+---
+
+# `skeletal-ui check`
+
+Asserts that all skeleton files are up to date. Exits with code `1` if any skeleton is stale or missing. Use in CI to prevent skeleton drift.
+
+```sh
+npx skeletal-ui check [options]
+```
+
+## Options
+
+| Flag | Description |
+|---|---|
+| `--json` | Output results as JSON for tooling integration. |
+
+## How staleness is detected
+
+Each generated skeleton file contains a hash comment in its header:
+
+```tsx
+// skeletal:hash:a1b2c3d4
+```
+
+The hash is computed from the source component's JSX structure. When the component's JSX changes, the hash changes, and `check` reports the skeleton as stale.
+
+## CI usage
+
+```yaml
+# .github/workflows/ci.yml
+- name: Check skeletons
+  run: npx skeletal-ui check
+```
+
+## JSON output
+
+```sh
+skeletal-ui check --json
+```
+
+```json
+{
+  "stale": [
+    {
+      "name": "UserCard",
+      "reason": "hash changed",
+      "file": "src/components/UserCard.skeleton.tsx"
+    }
+  ],
+  "upToDate": 4,
+  "total": 5
+}
+```

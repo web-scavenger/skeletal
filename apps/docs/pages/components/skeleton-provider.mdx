@@ -1,0 +1,44 @@
+---
+title: SkeletonProvider
+---
+
+# SkeletonProvider
+
+Override the default pulse theme and `Sk.*` primitive defaults for a subtree.
+
+## Usage
+
+```tsx
+import { SkeletonProvider } from 'skeletal-ui'
+
+<SkeletonProvider color="#e0e0e0" radius={8} duration={1.5}>
+  <Dashboard />
+</SkeletonProvider>
+
+// Override Sk.* primitive defaults at runtime
+<SkeletonProvider primitives={{ avatar: { size: 32 }, list: { count: 4 } }}>
+  <App />
+</SkeletonProvider>
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `color` | `string` | `#e2e8f0` | Sets `--sk-color` CSS variable |
+| `radius` | `number` | `4` | Sets `--sk-radius` (px) CSS variable |
+| `duration` | `number` | `2` | Sets `--sk-duration` (seconds) CSS variable |
+| `primitives` | `PrimitivesConfig` | — | Override `Sk.*` component defaults for this subtree |
+| `children` | `ReactNode` | required | — |
+
+## Global CSS variables
+
+You can also override CSS variables globally in your own CSS without using `SkeletonProvider`:
+
+```css
+:root {
+  --sk-color: #e0e0e0;
+  --sk-radius: 4px;
+  --sk-duration: 1.5s;
+}
+```

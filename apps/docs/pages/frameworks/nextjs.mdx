@@ -1,0 +1,81 @@
+---
+title: Next.js
+---
+
+# Next.js Integration
+
+## Install
+
+```sh
+npm install skeletal-ui
+```
+
+## Import styles
+
+```tsx
+// app/layout.tsx
+import 'skeletal-ui/styles.css'
+```
+
+## dynamicWithSkeleton
+
+`skeletal-ui/next` exports `dynamicWithSkeleton` — safe to import in any page or component file:
+
+```tsx
+import { dynamicWithSkeleton } from 'skeletal-ui/next'
+
+const Map = dynamicWithSkeleton(() => import('./Map'), { ssr: false })
+```
+
+This is a drop-in replacement for `next/dynamic` with the same options API.
+
+## Marker transform (optional)
+
+The build-time marker transform injects `data-sk` attributes during the Playwright crawl phase. Add it to `next.config.mjs`:
+
+```js
+// next.config.mjs
+import { skeletalNextTransform } from 'skeletal-ui/next-transform'
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  webpack: (config) => {
+    if (process.env.SKELETAL_ANALYZE === '1') {
+      config.module.rules.push({
+        test: /\.tsx$/,
+        use: [{ loader: skeletalNextTransform }],
+      })
+    }
+    return config
+  },
+}
+
+export default nextConfig
+```
+
+Then start your dev server with the flag:
+
+```sh
+SKELETAL_ANALYZE=1 next dev
+```
+
+This is only needed during analysis runs — the transform is gated behind `SKELETAL_ANALYZE=1` and has zero impact on normal dev and production builds.
+
+## App Router
+
+skeletal-ui works with the Next.js App Router. `SkeletonWrapper` is a client component and can wrap both Server Components and Client Components:
+
+```tsx
+// app/page.tsx (Server Component)
+import { SkeletonWrapper } from 'skeletal-ui'
+import { UserCard } from './UserCard'
+import { UserCardSkeleton } from './UserCard.skeleton'
+
+export default function Page() {
+  return (
+    <SkeletonWrapper fallback={<UserCardSkeleton />}>
+      <UserCard />  {/* async Server Component */}
+    </SkeletonWrapper>
+  )
+}
+```

@@ -1,0 +1,70 @@
+---
+title: analyze
+---
+
+# `skeletal-ui analyze`
+
+The main command. Scans source files, crawls routes with Playwright, generates `.skeleton.tsx` files, and wires them into your source.
+
+```sh
+npx skeletal-ui analyze [options]
+```
+
+## Options
+
+| Flag | Description |
+|---|---|
+| `--no-browser` | Skip Playwright crawl. Uses AST classification only — generates structural skeletons without pixel-accurate sizing. |
+| `--dry-run` | Print what would change without writing any files. |
+| `--only <Name>` | Limit to a single component by name. |
+
+## What it does
+
+1. Reads `skeletal.config.ts` to find routes and source patterns
+2. Scans TypeScript source for `<SkeletonWrapper>`, `React.lazy()`, and `next/dynamic()` usages
+3. Launches Playwright, navigates to each route, and records the bounding box, font-size, line-height, border-radius, and aspect-ratio of every marked element
+4. Generates a co-located `.skeleton.tsx` file for each component using `Sk.*` primitives
+5. Runs the codemod to patch source files with the `fallback` prop pointing at the generated skeleton
+
+## Examples
+
+```sh
+# Full analysis with Playwright
+npx skeletal-ui analyze
+
+# AST-only (no browser needed)
+npx skeletal-ui analyze --no-browser
+
+# Preview without writing
+npx skeletal-ui analyze --dry-run
+
+# Single component
+npx skeletal-ui analyze --only UserCard
+```
+
+## Generated file format
+
+```tsx
+// UserCard.skeleton.tsx — auto-generated, safe to edit after ejecting
+// skeletal:hash:a1b2c3d4
+// skeletal:pattern:rsc
+'use client'
+import { Sk } from 'skeletal-ui'
+
+export function UserCardSkeleton() {
+  return (
+    <div className="user-card">
+      <Sk.Avatar size={64} />
+      <div className="user-card__body">
+        <Sk.Heading height="22px" width="55%" />
+        <Sk.Text lines={2} height="14px" gap="12px" width="80%" />
+      </div>
+      <Sk.Button width={80} height={32} />
+    </div>
+  )
+}
+
+export { UserCardSkeleton as skeleton }
+```
+
+The `skeletal:hash` comment is used by [`check`](/cli/check) to detect staleness.

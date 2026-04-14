@@ -1,0 +1,62 @@
+---
+title: React.lazy Pattern
+---
+
+# React.lazy
+
+Drop-in replacement for `React.lazy()`. After `analyze`, skeletal-ui replaces `React.lazy` with `lazyWithSkeleton` from `skeletal-ui`.
+
+## Before / After
+
+```tsx
+// Before
+import React from 'react'
+const HeavyChart = React.lazy(() => import('./HeavyChart'))
+
+// After — auto-applied by skeletal-ui analyze
+import { lazyWithSkeleton } from 'skeletal-ui'
+const HeavyChart = lazyWithSkeleton(() => import('./HeavyChart'))
+```
+
+## How it works
+
+`lazyWithSkeleton` is a drop-in replacement for `React.lazy`. It:
+
+1. Wraps the dynamic import factory
+2. After the first render, loads the component's `skeleton` named export from the module
+3. Exposes it on `HeavyChart.skeleton` so `SkeletonWrapper` can find it automatically
+
+No explicit `Suspense` or `fallback` prop needed:
+
+```tsx
+export default function Dashboard() {
+  // SkeletonWrapper auto-resolves the skeleton from HeavyChart.skeleton
+  return (
+    <SkeletonWrapper>
+      <HeavyChart />
+    </SkeletonWrapper>
+  )
+}
+```
+
+## Generated skeleton
+
+```tsx
+// HeavyChart.skeleton.tsx
+// skeletal:hash:b2c3d4e5
+// skeletal:pattern:lazy
+'use client'
+import { Sk } from 'skeletal-ui'
+
+export function HeavyChartSkeleton() {
+  return <Sk.Image aspectRatio="16/9" width="100%" />
+}
+
+export { HeavyChartSkeleton as skeleton }
+```
+
+## Config
+
+```ts
+lazy: { enabled: true }  // default: true
+```

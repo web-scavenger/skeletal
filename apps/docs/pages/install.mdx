@@ -1,0 +1,34 @@
+---
+title: Installation
+---
+
+# Installation
+
+```sh
+npm install skeletal-ui
+# or
+pnpm add skeletal-ui
+# or
+yarn add skeletal-ui
+```
+
+**Peer dependencies:** `react >= 18`, `typescript >= 5.0`
+
+## Browser crawl (optional but recommended)
+
+For pixel-accurate skeleton generation, install a Playwright browser:
+
+```sh
+npx playwright install chromium
+```
+
+> Without Playwright you can still run `skeletal-ui analyze --no-browser` to generate minimal placeholder skeletons using AST-only classification.
+
+## Styles
+
+Import the default pulse animation once in your app entry point:
+
+```tsx
+// app/layout.tsx (Next.js App Router) or main.tsx (Vite)
+import 'skeletal-ui/styles.css'
+```

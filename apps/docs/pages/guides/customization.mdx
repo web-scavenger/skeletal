@@ -1,0 +1,77 @@
+---
+title: Customization
+---
+
+# Customization
+
+skeletal-ui exposes three optional config namespaces — `tailwind`, `classifier`, and `primitives` — that let you adapt all hardcoded sizes and thresholds to your design system.
+
+All keys are optional and deep-merged with built-in defaults, so you only override what you need.
+
+## CSS variables
+
+The simplest way to customize the look of all skeletons:
+
+```css
+:root {
+  --sk-color: #e0e0e0;    /* shimmer background color */
+  --sk-radius: 4px;       /* border-radius for all primitives */
+  --sk-duration: 1.5s;    /* pulse animation duration */
+}
+```
+
+Or use `SkeletonProvider` to scope changes to a subtree:
+
+```tsx
+<SkeletonProvider color="#e0e0e0" radius={8} duration={1.5}>
+  <Dashboard />
+</SkeletonProvider>
+```
+
+## Primitive defaults
+
+Override default prop values for `Sk.*` components. Affects both codegen output and runtime:
+
+```ts
+// skeletal.config.ts
+primitives: {
+  avatar: { size: 32, shape: 'circle' },
+  icon: { size: 20 },
+  button: { width: 100, height: 32 },
+  badge: { width: 56, height: 18 },
+  text: { lastLineWidth: '75%', gap: '0.5em', height: '1em' },
+  heading: { width: '65%', height: '1.4em' },
+  image: { aspectRatio: '4/3' },
+  card: { padding: 12 },
+  list: { count: 4, gap: 16 },
+  defaultPulseSkeleton: { height: 160 },
+},
+```
+
+## Tailwind overrides
+
+If you use a custom Tailwind config or Tailwind v4 with different base values:
+
+```ts
+tailwind: {
+  fontSizePx: { 'text-2xl': 28, 'text-3xl': 34 },
+  pairedLineHeightPx: { 'text-2xl': 36, 'text-3xl': 42 },
+  spacingUnit: 4,
+  textLengthThreshold: 60,
+},
+```
+
+## Classifier thresholds
+
+Controls how DOM elements are classified from Playwright geometry:
+
+```ts
+classifier: {
+  lineHeightEstimate: 24,
+  avatarSmallMax: 40,
+  iconMax: 28,
+  // ...
+},
+```
+
+See [Configuration](/config) for the full list.

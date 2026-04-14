@@ -1,0 +1,77 @@
+---
+title: Quick Start
+---
+
+# Quick Start
+
+## 1. Initialise
+
+```sh
+npx skeletal-ui init
+```
+
+Walks you through setup and creates `skeletal.config.ts` with your dev server URL and routes.
+
+## 2. Start your dev server, then analyse
+
+```sh
+# Start your app in one terminal
+npm run dev
+
+# In another terminal
+npx skeletal-ui analyze
+```
+
+skeletal-ui finds all candidates, crawls routes with Playwright, generates `.skeleton.tsx` files, and patches your source.
+
+## 3. Import styles
+
+```tsx
+// app/layout.tsx or main.tsx
+import 'skeletal-ui/styles.css'
+```
+
+Done. Your components now show pixel-accurate skeleton screens while they load.
+
+## What was generated?
+
+After `analyze`, each wrapped component has:
+
+1. A co-located `.skeleton.tsx` file (e.g. `UserCard.skeleton.tsx`) — the generated skeleton component
+2. Your source file is patched with the `fallback` prop pointing at the skeleton
+
+```tsx
+// Before analyze
+<SkeletonWrapper>
+  <UserCard />
+</SkeletonWrapper>
+
+// After analyze (auto-patched)
+import { UserCardSkeleton } from './UserCard.skeleton'
+
+<SkeletonWrapper fallback={<UserCardSkeleton />}>
+  <UserCard />
+</SkeletonWrapper>
+```
+
+## Re-running after changes
+
+When your component's JSX structure changes, re-run:
+
+```sh
+npx skeletal-ui analyze
+```
+
+Or use watch mode:
+
+```sh
+npx skeletal-ui watch
+```
+
+## CI check
+
+Add to your CI pipeline to fail if skeletons are stale:
+
+```sh
+npx skeletal-ui check
+```

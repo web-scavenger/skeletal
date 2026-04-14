@@ -1,0 +1,33 @@
+---
+title: Sk.List
+---
+
+import { ListShowcase } from '../../components/PrimitiveShowcase'
+
+# Sk.List
+
+Repeating list of skeleton items.
+
+<ListShowcase />
+
+## Usage
+
+```tsx
+<Sk.List />                           // 3 items
+<Sk.List count={5} gap={8} />
+<Sk.List count={4} renderItem={() => (
+  <div style={{ display: 'flex', gap: 8 }}>
+    <Sk.Avatar size={32} />
+    <Sk.Text width="70%" />
+  </div>
+)} />
+```
+
+## Props
+
+| Prop | Type | Default |
+|---|---|---|
+| `count` | `number` | `3` |
+| `gap` | `number` | `12` |
+| `renderItem` | `() => ReactNode` | — |
+| `className` | `string` | — |

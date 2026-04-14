@@ -1,0 +1,74 @@
+---
+title: Custom Skeletons
+---
+
+# Custom Skeletons
+
+## Ejecting a generated skeleton
+
+To customize a generated skeleton, eject it:
+
+```sh
+npx skeletal-ui eject UserCard
+```
+
+This copies the skeleton into your source tree and marks it with `skeletal:ejected` so future `analyze` runs never overwrite it.
+
+## Writing a skeleton from scratch
+
+You can write a skeleton file manually without using `analyze`. The only requirement is the named `skeleton` export:
+
+```tsx
+// UserCard.skeleton.tsx
+'use client'
+import { Sk } from 'skeletal-ui'
+
+export function UserCardSkeleton() {
+  return (
+    <div className="user-card">
+      <Sk.Avatar size={48} />
+      <div>
+        <Sk.Heading width="60%" />
+        <Sk.Text lines={2} />
+      </div>
+    </div>
+  )
+}
+
+// Required for lazyWithSkeleton / dynamicWithSkeleton auto-resolution
+export { UserCardSkeleton as skeleton }
+```
+
+## Using custom skeletons with SkeletonWrapper
+
+Pass the skeleton as the `fallback` prop:
+
+```tsx
+import { UserCardSkeleton } from './UserCard.skeleton'
+
+<SkeletonWrapper fallback={<UserCardSkeleton />}>
+  <UserCard />
+</SkeletonWrapper>
+```
+
+## Composing primitives
+
+Mix `Sk.*` primitives freely:
+
+```tsx
+export function FeedItemSkeleton() {
+  return (
+    <Sk.Card>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <Sk.Avatar size={40} />
+        <div style={{ flex: 1 }}>
+          <Sk.Text width="60%" height="14px" />
+          <Sk.Text width="40%" height="12px" />
+        </div>
+      </div>
+      <Sk.Image aspectRatio="16/9" />
+      <Sk.Text lines={3} />
+    </Sk.Card>
+  )
+}
+```

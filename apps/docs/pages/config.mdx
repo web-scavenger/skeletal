@@ -1,0 +1,148 @@
+---
+title: Configuration
+---
+
+# Configuration Reference
+
+```ts
+// skeletal.config.ts
+import { defineConfig } from 'skeletal-ui'
+
+export default defineConfig({
+  // Required
+  devServer: 'http://localhost:3000',
+  routes: ['/', '/dashboard', '/profile'],
+
+  // Source files to scan (glob patterns)
+  include: ['src/**/*.tsx'],           // default: ['src/**/*.tsx']
+  exclude: ['**/*.test.tsx'],          // default: []
+
+  // Output location for generated skeletons
+  output: 'colocated',                 // 'colocated' | 'directory'
+  outputDir: 'src/skeletons',          // only when output: 'directory'
+
+  // Animation style
+  animation: 'pulse',                 // 'pulse' | 'none'
+
+  // Border radius for all primitives (px)
+  radius: 6,
+
+  // Viewport widths for the Playwright crawl
+  breakpoints: [375, 768, 1280],
+
+  // Auto-wire source files after generation
+  autoWire: true,
+
+  // Pattern toggles
+  csr: { enabled: true },
+  lazy: { enabled: true },
+  dynamic: { enabled: true, detectStandalone: true },
+
+  // Framework (auto-detected if not set)
+  framework: 'nextjs',                // 'nextjs' | 'vite'
+
+  // Max concurrent Playwright pages
+  concurrency: 4,
+
+  // Tailwind font-size / line-height overrides for AST analysis
+  tailwind: {
+    fontSizePx: { 'text-2xl': 28 },
+    pairedLineHeightPx: { 'text-2xl': 36 },
+    spacingUnit: 4,
+    textLengthThreshold: 80,
+  },
+
+  // Geometry classifier thresholds
+  classifier: {
+    lineHeightEstimate: 20,
+    avatarSmallMax: 48,
+    iconMax: 32,
+    avatarMediumMax: 80,
+    badgeMaxHeight: 28,
+    badgeMaxWidth: 120,
+    textSingleLineMaxHeight: 30,
+    textMultiLineMinWidthRatio: 0.4,
+    imageMinDimension: 100,
+    imageAspectRatioMin: 0.8,
+    imageAspectRatioMax: 1.2,
+  },
+
+  // Sk.* primitive defaults — affects codegen output and runtime rendering
+  primitives: {
+    avatar: { size: 40, shape: 'circle' },
+    icon: { size: 24 },
+    button: { width: 120, height: 36 },
+    badge: { width: 60, height: 20 },
+    text: { lines: 1, lastLineWidth: '60%', height: '1em', gap: '0.4em' },
+    heading: { width: '70%', height: '1.4em' },
+    image: { aspectRatio: '16/9' },
+    card: { padding: 16 },
+    list: { count: 3, gap: 12 },
+    defaultPulseSkeleton: { height: 200 },
+  },
+})
+```
+
+## Route configuration
+
+Routes can be plain strings or objects with params and auth state:
+
+```ts
+routes: [
+  '/',
+  '/dashboard',
+  {
+    path: '/profile/:id',
+    params: { id: 'u_001' },
+  },
+  {
+    path: '/admin',
+    auth: 'path/to/auth-state.json',  // Playwright storageState file
+  },
+]
+```
+
+## Tailwind overrides
+
+If you use a custom Tailwind config or Tailwind v4, override just the entries you changed:
+
+```ts
+tailwind: {
+  fontSizePx: { 'text-2xl': 28, 'text-3xl': 34 },
+  pairedLineHeightPx: { 'text-2xl': 36, 'text-3xl': 42 },
+  spacingUnit: 4,
+  textLengthThreshold: 60,
+},
+```
+
+## Classifier thresholds
+
+Controls how DOM elements are classified from Playwright geometry. Adjust if your design system uses dimensions outside defaults:
+
+```ts
+classifier: {
+  lineHeightEstimate: 24,     // px per line when estimating <p> line count (default: 20)
+  avatarSmallMax: 40,         // max px for a square to be Avatar/Icon (default: 48)
+  iconMax: 28,                // max px for a small square to be Icon vs Avatar (default: 32)
+  avatarMediumMax: 64,        // max px for a circular element to be Avatar (default: 80)
+  badgeMaxHeight: 24,         // max height (px) for badge detection (default: 28)
+  badgeMaxWidth: 100,         // max width (px) for badge detection (default: 120)
+  textSingleLineMaxHeight: 28,
+  textMultiLineMinWidthRatio: 0.5,
+  imageMinDimension: 80,
+  imageAspectRatioMin: 0.75,
+  imageAspectRatioMax: 1.3,
+},
+```
+
+## Primitive defaults
+
+Override default prop values for all `Sk.*` components. Changes apply in two places:
+
+- **Codegen** — generated `.skeleton.tsx` files omit props whose value matches the overridden default.
+- **Runtime** — `Sk.*` components use the new defaults when no explicit prop is passed.
+
+Three-layer resolution for every `Sk.*` prop:
+1. Explicit prop on the component (`<Sk.Avatar size={64} />`) — always wins
+2. `SkeletonProvider primitives` context default
+3. Config `primitives` default (or hardcoded skeletal-ui default)

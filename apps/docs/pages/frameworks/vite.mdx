@@ -1,0 +1,60 @@
+---
+title: Vite
+---
+
+# Vite Integration
+
+## Install
+
+```sh
+npm install skeletal-ui
+```
+
+## Import styles
+
+```tsx
+// main.tsx
+import 'skeletal-ui/styles.css'
+```
+
+## Vite plugin
+
+Add the Vite plugin to `vite.config.ts`:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { skeletalVitePlugin } from 'skeletal-ui/vite'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    skeletalVitePlugin(),
+  ],
+})
+```
+
+The plugin activates only when `SKELETAL_ANALYZE=1` is set — zero impact on normal dev and production builds:
+
+```sh
+SKELETAL_ANALYZE=1 vite dev
+```
+
+## React.lazy with Vite
+
+Use `lazyWithSkeleton` for code-split components:
+
+```tsx
+import { lazyWithSkeleton } from 'skeletal-ui'
+
+const HeavyChart = lazyWithSkeleton(() => import('./HeavyChart'))
+
+export default function Dashboard() {
+  return (
+    <SkeletonWrapper>
+      <HeavyChart />
+    </SkeletonWrapper>
+  )
+}
+```

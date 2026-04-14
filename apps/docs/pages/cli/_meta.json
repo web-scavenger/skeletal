@@ -1,0 +1,9 @@
+{
+  "index": "Overview",
+  "init": "init",
+  "analyze": "analyze",
+  "check": "check",
+  "watch": "watch",
+  "preview": "preview",
+  "eject": "eject"
+}

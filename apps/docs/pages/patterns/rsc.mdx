@@ -1,0 +1,73 @@
+---
+title: RSC Pattern
+---
+
+# RSC — async Server Components
+
+Wrap any `async` server component in `<SkeletonWrapper>`. skeletal-ui detects the `async` keyword, captures rendered geometry via Playwright, and generates a co-located `.skeleton.tsx`.
+
+## Usage
+
+```tsx
+import { SkeletonWrapper } from 'skeletal-ui'
+import { UserCard } from './UserCard'
+
+export default function Page() {
+  return (
+    <SkeletonWrapper>
+      <UserCard userId="u_001" />
+    </SkeletonWrapper>
+  )
+}
+```
+
+After `skeletal-ui analyze`, the wrapper is patched automatically:
+
+```tsx
+import { UserCardSkeleton } from './UserCard.skeleton'
+
+<SkeletonWrapper fallback={<UserCardSkeleton />}>
+  <UserCard userId="u_001" />
+</SkeletonWrapper>
+```
+
+## Generated skeleton
+
+```tsx
+// UserCard.skeleton.tsx — auto-generated
+// skeletal:hash:a1b2c3d4
+// skeletal:pattern:rsc
+'use client'
+import { Sk } from 'skeletal-ui'
+
+export function UserCardSkeleton() {
+  return (
+    <div className="user-card">
+      <Sk.Avatar size={64} />
+      <div className="user-card__body">
+        <Sk.Heading height="22px" width="55%" />
+        <Sk.Text lines={2} height="14px" gap="12px" width="80%" />
+      </div>
+      <Sk.Button width={80} height={32} />
+    </div>
+  )
+}
+
+export { UserCardSkeleton as skeleton }
+```
+
+Sizes come from Playwright's computed styles — bar heights match `font-size`, outer heights match `line-height`, so the layout takes up identical space whether loaded or not.
+
+## How SkeletonWrapper works for RSC
+
+`SkeletonWrapper` combines `Suspense` and `ErrorBoundary`. While the async component suspends, the `fallback` skeleton is shown. On error, the skeleton continues showing (no blank screen).
+
+## Config
+
+Enable/disable RSC detection in `skeletal.config.ts`:
+
+```ts
+// RSC is always enabled (it's the default pattern for SkeletonWrapper).
+// To disable CSR detection (non-async components), use:
+csr: { enabled: false }
+```

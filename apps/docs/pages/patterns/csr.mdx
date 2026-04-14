@@ -1,0 +1,59 @@
+---
+title: CSR Pattern
+---
+
+# CSR — Client Components
+
+Same as RSC, but for non-async components that fetch data client-side (React Query, SWR, `useEffect`, etc.). skeletal-ui detects non-async functions and skips the Playwright `networkidle` wait.
+
+## Usage
+
+```tsx
+'use client'
+import { useState, useEffect } from 'react'
+import { SkeletonWrapper } from 'skeletal-ui'
+import { ProfileCardSkeleton } from './ProfileCard.skeleton'
+
+export function ProfileCard({ username }: { username: string }) {
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    fetch(`/api/stats/${username}`).then(r => r.json()).then(setStats)
+  }, [username])
+
+  // ...
+}
+
+// Wrap with loading prop for explicit CSR control
+<SkeletonWrapper loading={!stats} fallback={<ProfileCardSkeleton />}>
+  <ProfileCard username="alex" />
+</SkeletonWrapper>
+```
+
+## The `loading` prop
+
+For CSR components you control loading state explicitly via the `loading` prop:
+
+```tsx
+const { data, isLoading } = useQuery({ queryKey: ['profile'], queryFn: fetchProfile })
+
+<SkeletonWrapper loading={isLoading} fallback={<ProfileCardSkeleton />}>
+  <ProfileCard />
+</SkeletonWrapper>
+```
+
+When `loading` is `true`, the fallback skeleton is shown regardless of React's Suspense state.
+
+## Detection
+
+skeletal-ui classifies a component as CSR when:
+- It's wrapped in `<SkeletonWrapper>`
+- The source function is **not** `async`
+
+## Config
+
+```ts
+csr: { enabled: true }  // default: true
+```
+
+Set to `false` to prevent skeletal-ui from analyzing non-async components wrapped in `SkeletonWrapper`.

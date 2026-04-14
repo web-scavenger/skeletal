@@ -1,0 +1,28 @@
+---
+title: Sk.Number
+---
+
+import { NumberShowcase } from '../../components/PrimitiveShowcase'
+
+# Sk.Number
+
+Single-line numeric value placeholder. When generated, `height` is set to the element's `font-size` (visual bar) and `outerHeight` to the full bounding-box height (layout stability).
+
+<NumberShowcase />
+
+## Usage
+
+```tsx
+<Sk.Number />
+<Sk.Number width={60} />
+<Sk.Number width={28} height="16px" outerHeight="24px" />  // auto-generated
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `width` | `number` | `80` | Width of the bar |
+| `height` | `number \| string` | `'1em'` | Visual bar height (set to `font-size` by analyzer) |
+| `outerHeight` | `string` | — | Outer container height for layout stability (set to bounding-box height by analyzer) |
+| `className` | `string` | — | Extra CSS class |

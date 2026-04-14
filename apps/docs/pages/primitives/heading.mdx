@@ -1,0 +1,27 @@
+---
+title: Sk.Heading
+---
+
+import { HeadingShowcase } from '../../components/PrimitiveShowcase'
+
+# Sk.Heading
+
+Single-line heading block. When generated, `height` is set to the element's actual bounding-box height — so multi-line headings (an h3 that wraps) are correctly represented as a single taller block.
+
+<HeadingShowcase />
+
+## Usage
+
+```tsx
+<Sk.Heading />
+<Sk.Heading width="50%" />
+<Sk.Heading height="42px" width="88%" />  // auto-generated: exact bounding box height
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `width` | `string` | `'70%'` | Width of the block |
+| `height` | `string` | `'1.4em'` | Height of the block (overridden by analyzer with exact bounding box height) |
+| `className` | `string` | — | Extra CSS class |

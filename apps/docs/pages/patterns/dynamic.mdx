@@ -1,0 +1,53 @@
+---
+title: next/dynamic Pattern
+---
+
+# next/dynamic
+
+Drop-in replacement for Next.js `dynamic()`. After `analyze`, skeletal-ui replaces `next/dynamic` with `dynamicWithSkeleton` from `skeletal-ui/next`.
+
+## Before / After
+
+```tsx
+// Before
+import dynamic from 'next/dynamic'
+const Map = dynamic(() => import('./MapComponent'), { ssr: false })
+
+// After — auto-applied by skeletal-ui analyze
+import { dynamicWithSkeleton } from 'skeletal-ui/next'
+const Map = dynamicWithSkeleton(() => import('./MapComponent'), { ssr: false })
+```
+
+## How it works
+
+`dynamicWithSkeleton` is a drop-in replacement for `next/dynamic` with the same options API. It uses the module's `skeleton` named export as the `loading` state — no `loading: () => <Spinner />` required.
+
+## Generated skeleton
+
+```tsx
+// MapComponent.skeleton.tsx
+// skeletal:hash:c3d4e5f6
+// skeletal:pattern:dynamic
+'use client'
+import { Sk } from 'skeletal-ui'
+
+export function MapComponentSkeleton() {
+  return <Sk.Image aspectRatio="16/9" width="100%" />
+}
+
+export { MapComponentSkeleton as skeleton }
+```
+
+## Import note
+
+`skeletal-ui/next` is safe to import in page files and components. The build-time marker transform (`skeletal-ui/next-transform`) is for `next.config.mjs` only.
+
+See [Next.js integration](/frameworks/nextjs) for the full framework setup.
+
+## Config
+
+```ts
+dynamic: { enabled: true, detectStandalone: true }  // defaults
+```
+
+`detectStandalone: true` also detects `dynamic()` calls outside of `SkeletonWrapper` and converts them to `dynamicWithSkeleton`.

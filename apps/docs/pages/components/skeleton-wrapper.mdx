@@ -1,0 +1,42 @@
+---
+title: SkeletonWrapper
+---
+
+# SkeletonWrapper
+
+`SkeletonWrapper` is a client component that combines `Suspense` and `ErrorBoundary`. It shows a skeleton while its children suspend and falls back to the skeleton on error.
+
+## Usage
+
+```tsx
+import { SkeletonWrapper } from 'skeletal-ui'
+
+// Explicit fallback (required for Server Components in Next.js App Router)
+<SkeletonWrapper fallback={<UserCardSkeleton />}>
+  <UserCard />
+</SkeletonWrapper>
+
+// CSR — explicit loading control
+<SkeletonWrapper loading={!data} fallback={<UserCardSkeleton />}>
+  <UserCard />
+</SkeletonWrapper>
+
+// Auto-resolved fallback (when Component.skeleton is set — works in client trees)
+<SkeletonWrapper>
+  <UserCard />
+</SkeletonWrapper>
+```
+
+## Fallback resolution order
+
+1. `fallback` prop (explicit — always wins)
+2. `child.type.skeleton` — static property set via `lazyWithSkeleton` / `dynamicWithSkeleton`
+3. `<DefaultPulseSkeleton />` — built-in full-width pulse bar
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | required | The component to render |
+| `fallback` | `ReactNode` | — | Skeleton to show while loading |
+| `loading` | `boolean` | — | Force skeleton display (CSR pattern — controls visibility without Suspense) |

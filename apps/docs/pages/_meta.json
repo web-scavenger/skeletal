@@ -1,0 +1,22 @@
+{
+  "index": {
+    "title": "skeletal-ui",
+    "display": "hidden"
+  },
+  "overview": "Overview",
+  "install": "Installation",
+  "quick-start": "Quick Start",
+  "patterns": "Patterns",
+  "primitives": "Primitives",
+  "components": "Components",
+  "cli": "CLI",
+  "config": "Configuration",
+  "frameworks": "Frameworks",
+  "guides": "Guides",
+  "demo": {
+    "title": "Live Demo ↗",
+    "href": "/demo",
+    "newWindow": false
+  },
+  "changelog": "Changelog"
+}

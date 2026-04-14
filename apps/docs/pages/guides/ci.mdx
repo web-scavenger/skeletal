@@ -1,0 +1,65 @@
+---
+title: CI Integration
+---
+
+# CI Integration
+
+Add `skeletal-ui check` to your CI pipeline to fail the build whenever skeletons drift from the source.
+
+## GitHub Actions
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Check skeletons
+        run: npx skeletal-ui check
+```
+
+## JSON output for custom reporting
+
+```sh
+skeletal-ui check --json
+```
+
+```json
+{
+  "stale": [
+    {
+      "name": "UserCard",
+      "reason": "hash changed",
+      "file": "src/components/UserCard.skeleton.tsx"
+    }
+  ],
+  "upToDate": 4,
+  "total": 5
+}
+```
+
+Use `--json` to integrate with your own reporting tools or to generate structured output in CI logs.
+
+## How staleness works
+
+Staleness is detected via an AST hash stored in each skeleton file's header comment:
+
+```tsx
+// skeletal:hash:a1b2c3d4
+```
+
+When the component's JSX structure changes, the hash changes. `check` computes the hash of the current source and compares it to the stored hash — if they differ, the skeleton is stale.
+
+Ejected files (marked `skeletal:ejected`) are still checked for hash changes — you'll be warned if the source component changes significantly after ejection.
