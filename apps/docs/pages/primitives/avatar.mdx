@@ -1,0 +1,27 @@
+---
+title: Sk.Avatar
+---
+
+import { AvatarShowcase } from '../../components/PrimitiveShowcase'
+
+# Sk.Avatar
+
+Circular or square avatar placeholder. Detected from `border-radius >= 50%` or `rounded-full` class.
+
+<AvatarShowcase />
+
+## Usage
+
+```tsx
+<Sk.Avatar />
+<Sk.Avatar size={48} />
+<Sk.Avatar size={32} shape="square" />
+```
+
+## Props
+
+| Prop | Type | Default |
+|---|---|---|
+| `size` | `number` | `40` |
+| `shape` | `'circle' \| 'square'` | `'circle'` |
+| `className` | `string` | — |

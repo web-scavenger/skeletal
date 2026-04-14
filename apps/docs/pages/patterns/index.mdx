@@ -1,0 +1,31 @@
+---
+title: Patterns
+---
+
+# Patterns
+
+skeletal-ui detects and wires four patterns automatically.
+
+| Pattern | Trigger | Docs |
+|---|---|---|
+| **RSC** | `async` component inside `<SkeletonWrapper>` | [RSC →](/patterns/rsc) |
+| **CSR** | non-async component inside `<SkeletonWrapper>` | [CSR →](/patterns/csr) |
+| **lazy** | `React.lazy(() => import('./X'))` | [lazy →](/patterns/lazy) |
+| **dynamic** | `next/dynamic(() => import('./X'))` | [dynamic →](/patterns/dynamic) |
+
+## Detection
+
+The scanner checks the `async` keyword on the source function:
+- `async function` → `rsc` pattern
+- non-`async` function → `csr` pattern
+- `React.lazy(...)` → `lazy` pattern
+- `next/dynamic(...)` → `dynamic` pattern
+
+## Playwright wait behavior
+
+| Pattern | Playwright wait |
+|---|---|
+| RSC | waits for `networkidle` (server data needed) |
+| CSR | skips `networkidle` (client-side, no server chunk) |
+| lazy | waits for `networkidle` (chunk load) |
+| dynamic | waits for `networkidle` (chunk load) |

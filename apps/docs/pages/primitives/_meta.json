@@ -1,0 +1,13 @@
+{
+  "index": "Overview",
+  "text": "Sk.Text",
+  "heading": "Sk.Heading",
+  "avatar": "Sk.Avatar",
+  "image": "Sk.Image",
+  "button": "Sk.Button",
+  "badge": "Sk.Badge",
+  "number": "Sk.Number",
+  "icon": "Sk.Icon",
+  "list": "Sk.List",
+  "card": "Sk.Card"
+}

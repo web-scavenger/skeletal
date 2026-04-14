@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'examples/docs-site/**'
+      - 'apps/docs/**'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -34,7 +34,7 @@ jobs:
         run: pnpm --filter skeletal-ui build
 
       - name: Build docs
-        run: pnpm --filter docs-site build
+        run: pnpm --filter docs build
         env:
           NEXT_PUBLIC_BASE_PATH: /skeletal
 
@@ -42,4 +42,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./examples/docs-site/out
+          publish_dir: ./apps/docs/out

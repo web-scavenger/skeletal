@@ -1,0 +1,25 @@
+---
+title: watch
+---
+
+# `skeletal-ui watch`
+
+Watches for changes to component source files and re-runs `analyze` automatically.
+
+```sh
+npx skeletal-ui watch
+```
+
+## When to use
+
+Use during active development to keep skeletons in sync without manually re-running `analyze` after every component change.
+
+## Behavior
+
+- Watches all files matching the `include` patterns in `skeletal.config.ts`
+- On change, re-runs analysis for the affected component only (equivalent to `--only <Name>`)
+- Uses the same Playwright crawl as `analyze` by default
+
+## Note
+
+Watch mode requires your dev server to be running at the configured `devServer` URL. skeletal-ui does not start the dev server for you.

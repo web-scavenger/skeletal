@@ -1,0 +1,38 @@
+---
+title: Overview
+---
+
+# skeletal-ui
+
+> Automate skeleton loading screens for React and Next.js TypeScript projects.
+
+skeletal-ui scans your TypeScript source, crawls your running app with Playwright to capture real element geometry (bounding box, border-radius, font-size, line-height), and generates pixel-accurate `.skeleton.tsx` files — no manual skeleton code, no copy-pasting CSS, no drift from the real UI.
+
+## How it works
+
+1. **Scan** — reads your TypeScript source and finds components wrapped in `<SkeletonWrapper>`, `React.lazy()`, or `next/dynamic()`.
+2. **Crawl** — Playwright opens each route, waits for load, and records bounding box, border-radius, font-size, and line-height of every marked element — exact computed values from the browser.
+3. **Generate** — a `.skeleton.tsx` file is co-located next to each component, using `Sk.*` primitives sized to pixel-accurately match the real layout.
+4. **Wire** — the codemod patches your source files so the skeleton is shown automatically while the real component loads.
+
+Re-run `skeletal-ui analyze` any time your component changes. `skeletal-ui check` fails the build if skeletons are stale — use it in CI.
+
+## The four patterns
+
+| Pattern | Trigger | What skeletal-ui does |
+|---|---|---|
+| **RSC** | `async` component inside `<SkeletonWrapper>` | generates skeleton, adds `fallback` prop |
+| **CSR** | non-async component inside `<SkeletonWrapper>` | generates skeleton, adds `fallback` prop |
+| **lazy** | `React.lazy(() => import('./X'))` | generates skeleton, replaces with `lazyWithSkeleton` |
+| **dynamic** | `next/dynamic(() => import('./X'))` | generates skeleton, replaces with `dynamicWithSkeleton` |
+
+## Requirements
+
+| Dependency | Version |
+|---|---|
+| Node.js | `>= 18` |
+| TypeScript | `>= 5.0` |
+| React | `>= 18` |
+| `@playwright/test` | `>= 1.44` _(optional — browser crawl only)_ |
+
+skeletal-ui is **TypeScript-only**. JavaScript projects are not supported.

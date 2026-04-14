@@ -1,0 +1,33 @@
+---
+title: init
+---
+
+# `skeletal-ui init`
+
+Interactive setup wizard. Creates `skeletal.config.ts` in your project root.
+
+```sh
+npx skeletal-ui init
+```
+
+## What it does
+
+1. Asks for your dev server URL (default: `http://localhost:3000`)
+2. Asks which routes to crawl
+3. Detects your framework (Next.js or Vite) and suggests the right plugin setup
+4. Writes `skeletal.config.ts`
+5. Prints next steps including the Playwright install command
+
+## Output
+
+```ts
+// skeletal.config.ts
+import { defineConfig } from 'skeletal-ui'
+
+export default defineConfig({
+  devServer: 'http://localhost:3000',
+  routes: ['/', '/dashboard'],
+})
+```
+
+See [Configuration](/config) for all available options.

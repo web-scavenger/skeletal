@@ -1,0 +1,37 @@
+---
+title: eject
+---
+
+# `skeletal-ui eject <Name>`
+
+Copies a generated `.skeleton.tsx` into your source tree so you can edit it freely. Ejected files are never overwritten by future `analyze` runs.
+
+```sh
+npx skeletal-ui eject UserCard
+```
+
+## What it does
+
+1. Finds the generated `UserCard.skeleton.tsx`
+2. Adds `skeletal:ejected` to the file header
+3. Marks the file as ejected in the config so future `analyze` runs skip it
+
+## Ejected file header
+
+```tsx
+// skeletal:hash:a1b2c3d4
+// skeletal:ejected
+// skeletal:pattern:rsc
+```
+
+## When to use
+
+Eject a skeleton when:
+
+- The generated output doesn't match your design intent
+- You want to compose multiple `Sk.*` primitives differently
+- You want to add conditional rendering or custom logic
+
+## After ejecting
+
+You own the file. `analyze` will never touch it again. `check` will still verify that the source component's hash hasn't changed — if the component changes significantly after ejection, `check` will warn you.

@@ -141,7 +141,7 @@ vite.config.ts.timestamp-*
 # Monorepo build artifacts
 dist/
 .turbo/
-docs/
+docs/planning
 .claude
 .agents
 skills-lock.json

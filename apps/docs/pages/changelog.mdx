@@ -1,0 +1,152 @@
+---
+title: Changelog
+---
+
+# Changelog
+
+All notable changes to `skeletal-ui` are documented here.
+
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [0.8.0] — 2026-04-13
+
+### Added
+
+- **User-configurable sizes and constants** — three new optional config namespaces in `skeletal.config.ts`: `tailwind`, `classifier`, and `primitives`. All keys are optional and deep-merged with built-in defaults; existing configs parse without changes.
+- **`tailwind` config namespace** — overrides the Tailwind font-size/line-height tables used during AST analysis. Keys: `fontSizePx`, `leading`, `pairedLineHeightPx`, `spacingUnit`, `textLengthThreshold`. Useful for Tailwind v4 configs, custom theme extensions, or non-standard spacing scales.
+- **`classifier` config namespace** — overrides geometry thresholds used to classify Playwright-measured DOM elements: `lineHeightEstimate`, `avatarSmallMax`, `iconMax`, `avatarMediumMax`, `badgeMaxHeight`, `badgeMaxWidth`, `textSingleLineMaxHeight`, `textMultiLineMinWidthRatio`, `imageMinDimension`, `imageAspectRatioMin`, `imageAspectRatioMax`.
+- **`primitives` config namespace** — overrides default prop values for all `Sk.*` components. Affects both codegen (generated files omit props that match the new default) and runtime rendering. Per-component keys: `avatar`, `icon`, `button`, `badge`, `text`, `heading`, `image`, `card`, `list`, `defaultPulseSkeleton`.
+- **`SkeletonProvider` — `primitives` prop** — runtime equivalent of the `primitives` config namespace. Wraps children with a React context so all `Sk.*` in the subtree pick up overridden defaults without prop drilling.
+- **`primitives/context.ts`** — new internal module exporting `SkeletalContext` and `useSkeletalContext`.
+- **`resolveAstConstants(tailwind?)` factory** — merges user `TailwindConfig` with built-in defaults; returned object threaded through all AST analysis helpers.
+- **`resolveClassifierThresholds(cfg?)` factory** — merges user `ClassifierConfig` with built-in defaults; passed to `buildClassificationRules`.
+- **`buildClassificationRules(thresholds)` factory** — replaces the static `CLASSIFICATION_RULES` array; rules are now closures reading from the `thresholds` parameter.
+- **New exported types**: `AstConstants`, `TailwindConfig`, `ClassifierConfig`, `PrimitivesConfig`.
+- **Codegen default-elision** — `printSkeletonTree` / `printElement` accept optional `primitivesConfig` and omit props whose value equals the effective default.
+- **3 new codegen tests** — cover default-elision for `Text width="100%"`, `Avatar size={40}/shape="circle"`, and `primitivesConfig`-overridden defaults.
+
+### Changed
+
+- **All `Sk.*` primitives** — removed hardcoded default parameter values; props now resolved via three-layer lookup: explicit prop → `SkeletonProvider` context → hardcoded default.
+- **`classify(geometry, thresholds?)`** — second parameter added.
+- **`generateSkeletonBodyFromSource` / `generateSkeletonBodyWithGeometry`** — optional `constants?: AstConstants` last parameter added.
+- **`generateSkeleton`** — optional `primitivesConfig?: PrimitivesConfig` last parameter added.
+- **`analyze` command** — resolves `astConstants` and `classifierThresholds` from config once at startup and threads them to all generation call sites.
+
+---
+
+## [0.7.0] — 2026-04-12
+
+### Changed
+
+- **`init` command — full interactive wizard overhaul**: replaced minimal 3-question prompt with a fully guided wizard supporting **Quick** and **Advanced** modes. Quick mode asks only devServer URL, routes, and animation. Advanced mode additionally prompts for border radius, framework, and Playwright concurrency.
+- **`init` — auto-detects framework and dev server port**: reads `package.json` deps to detect `nextjs` or `vite`, and parses `scripts.dev` / `scripts.start` for `--port`/`-p` flags.
+- **`init` — route discovery from disk**: scans `src/app/`, `app/`, `src/pages/`, or `pages/` and presents discovered routes as a pre-selected multiselect checklist. App Router strips route groups (`(group)` segments), preserves dynamic segments (`[slug]`).
+- **`init` — config preview before write**: displays the full generated config and requires explicit confirmation before writing `skeletal.config.ts`.
+- **`init` — `include`, `exclude`, `output` always written**: both Quick and Advanced configs now include these fields with their defaults.
+- **`init` — CSR/lazy/dynamic always enabled**: removed the multiselect that allowed toggling these patterns off.
+
+### Added
+
+- **`detect-project.ts`** — new pure utility (`detectProject(projectRoot): DetectedProject`) encapsulating framework detection, dev server URL synthesis, and route discovery.
+- **21 unit tests for `detectProject`**: cover framework detection, port extraction, app router discovery, pages router discovery, and no-router fallback.
+
+---
+
+## [0.6.0] — 2026-04-10
+
+### Changed
+
+- **Animation — shimmer → pulse**: replaced horizontal gradient sweep with opacity-based pulse (`opacity 1 → 0.4 → 1`). Easing: `cubic-bezier(0.4, 0, 0.6, 1)`. Duration increased from `1.5s` to `2s`. The `--sk-highlight` CSS variable has been removed.
+- **`SkeletonProvider` — removed `highlight` prop**: no longer needed after animation change. `color`, `radius`, and `duration` remain.
+- **AST generator — `tailwindLeadingMultiplier` uses Tailwind paired line-heights**: uses built-in font-size/line-height pairs (`text-xs` → 16px, `text-sm` → 20px, etc.) instead of a hardcoded `1.5` multiplier.
+- **AST generator — `tailwindLeadingMultiplier` receives `inheritedTextClass`**: child elements inheriting a parent's `text-*` class now also inherit the correct paired line-height.
+
+### Fixed
+
+- **Layout jump on skeleton ↔ loaded toggle for `<span>` elements (AST-only path)**: caused by `lineHeight` being 18px for `text-xs` spans instead of the correct 16px.
+- **`<p>` with short static text emitting `lines={2}`**: AST-only path now resolves paragraph text at analysis time — including property accesses on local `as const` objects (e.g. `{POST.excerpt}`) — and emits `lines={1}` for text under 80 characters.
+
+---
+
+## [0.5.0] — 2026-04-08
+
+### Fixed
+
+- **`Sk.Text` invisible in `align-items: center` flex containers**: `lineHeight` path now places `width` on the outer `<span>` instead of the inner bar.
+- **`<img>` with `rounded-full` generated as `Sk.Image` instead of `Sk.Avatar`**: `classifyLeafWithGeo` now checks `isCircularGeo` for `img` tags.
+- **Gradient hero/banner divs generated as empty or wrong element**: `bg-gradient-*` divs taller than 40px now emit `Sk.Image` with the measured height.
+- **Purely visual child containers silently dropped**: containers whose children produce no skeleton output now emit `Sk.Card` instead of being omitted.
+- **`dynamicWithSkeleton` — `require is not defined` in browser bundles**: replaced dynamic `require('next/dynamic')` with a static ESM `import`.
+
+### Changed
+
+- **AST generator — single-line text width uses pixels**: emits absolute pixel widths (e.g. `width="68px"`) for single-line `Sk.Text` instead of percentages.
+
+### Added
+
+- **`package.json` — `homepage`, `repository`, `bugs`**: npm package page now links to the live demo and GitHub repository.
+
+---
+
+## [0.2.0] — 2026-04-08
+
+### Added
+
+- **`Sk.Text` — `lineHeight` prop**: outer container height for single-line text. Eliminates height jump on skeleton ↔ loaded toggle.
+- **`Sk.Text` — `gap` prop**: controls gap between bars in multi-line mode. Analyzer computes this so total skeleton height matches real element exactly.
+- **`Sk.Heading` — `height` prop**: overrides the fixed `1.4em` default. Analyzer sets this to the element's actual bounding-box height.
+- **`Sk.Number` — `outerHeight` prop**: outer container height for layout stability.
+- **Playwright geometry — `fontSize` + `lineHeight`**: `extractChildGeometryScript` now captures computed `fontSize` and `lineHeight` alongside `borderRadius` and `aspectRatio`.
+- **AST generator — geo-based avatar detection (`isCircularGeo`)**: detects avatars from computed `border-radius` (≥ 45% of min dimension or exactly `50%`).
+- **AST generator — geo-based image detection (`isImageShapedGeo`)**: detects image-shaped containers from computed `aspect-ratio`.
+- **AST generator — `aspect-*` → `Sk.Image` rule (AST-only path)**: maps `aspect-video` → `aspectRatio="16/9"`, `aspect-square` → `aspectRatio="1/1"`.
+- **AST generator — template literal `className` support**: extracts static class tokens from `` className={`...${expr}...`} ``.
+- **AST generator — `hasOnlyInlineChildren`**: replaces `hasOnlyLeafChildren` with a broader inline element list.
+- **AST generator — spacing class preservation**: `extractSpacingClasses` extracts `mt-*`, `mb-*`, `mx-*`, etc. and passes them as `className` on `Sk.Text`.
+
+### Changed
+
+- **`Sk.Text` multi-line `className`**: moved from each inner bar to the outer flex wrapper.
+- **AST generator — `Sk.Text` bar height**: changed from `lineHeight` to `fontSize` (Playwright-extracted).
+- **AST generator — `Sk.Number` height**: changed from bounding-box height to `fontSize`. `outerHeight` preserves layout.
+- **AST generator — `classifyNodeWithGeo` heading**: uses bounding-box `h` for `Sk.Heading height`.
+
+### Fixed
+
+- Height jump when toggling skeleton ↔ loaded for single-line text elements (`lineHeight` wrapper).
+- Height jump for numeric stat blocks (`outerHeight` wrapper on `Sk.Number`).
+- Skeleton overall height taller than real content for multi-line text (gap overflow fixed by explicit `gap` prop computation).
+- Avatar missing from components using template-literal `className`.
+- `aspect-video` areas generating `Sk.Text` bars instead of `Sk.Image`.
+- `<p><span>` inline patterns generating separate `Sk.Text` per span instead of one bar per paragraph.
+
+---
+
+## [0.1.0] — 2026-03-01
+
+Initial release.
+
+### Added
+
+- CLI: `init`, `analyze`, `check`, `watch`, `preview`, `eject` commands.
+- Playwright crawler: bounding-box and `border-radius` / `aspect-ratio` geometry extraction.
+- AST scanner: RSC / CSR / lazy / dynamic pattern detection via ts-morph.
+- Code generator: co-located `.skeleton.tsx` output with `Sk.*` primitives.
+- Codemod: auto-wires `fallback` prop and `lazyWithSkeleton` / `dynamicWithSkeleton` replacements.
+- Primitives: `Sk.Text`, `Sk.Heading`, `Sk.Avatar`, `Sk.Image`, `Sk.Button`, `Sk.Badge`, `Sk.Number`, `Sk.Icon`, `Sk.List`, `Sk.Card`.
+- `SkeletonWrapper`, `SkeletonProvider`, `DefaultPulseSkeleton`.
+- `lazyWithSkeleton` (runtime), `dynamicWithSkeleton` (Next.js), Vite plugin.
+- CSS-only pulse animation with `prefers-reduced-motion` support.
+- AST hash staleness detection (`skeletal:hash` header comment).
+- `skeletal.config.ts` with `defineConfig()` and Zod schema validation.
+
+[0.8.0]: https://github.com/web-scavenger/skeletal/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/web-scavenger/skeletal/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/web-scavenger/skeletal/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/web-scavenger/skeletal/compare/v0.2.0...v0.5.0
+[0.2.0]: https://github.com/web-scavenger/skeletal/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/web-scavenger/skeletal/releases/tag/v0.1.0

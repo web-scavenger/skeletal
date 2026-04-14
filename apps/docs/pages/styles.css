@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark-mode skeleton color */
+.dark .sk-base {
+  --sk-color: #3f3f46;
+}
+
+/* Animation pause toggle — add .sk-paused to any ancestor to freeze all skeletons inside */
+.sk-paused .sk-base {
+  animation: none !important;
+}

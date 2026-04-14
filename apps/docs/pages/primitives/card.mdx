@@ -1,0 +1,32 @@
+---
+title: Sk.Card
+---
+
+import { CardShowcase } from '../../components/PrimitiveShowcase'
+
+# Sk.Card
+
+Block container with optional padding and composable children.
+
+<CardShowcase />
+
+## Usage
+
+```tsx
+<Sk.Card>
+  <Sk.Heading />
+  <Sk.Text lines={2} />
+</Sk.Card>
+
+<Sk.Card width={320} height={200} />
+```
+
+## Props
+
+| Prop | Type | Default |
+|---|---|---|
+| `width` | `string \| number` | `'100%'` |
+| `height` | `string \| number` | — |
+| `padding` | `number` | `16` |
+| `children` | `ReactNode` | — |
+| `className` | `string` | — |

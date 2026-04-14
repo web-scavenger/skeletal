@@ -1,0 +1,61 @@
+---
+title: Primitives
+---
+
+# Sk.* Primitives
+
+Pure CSS shimmer components — no runtime dependencies. Used in auto-generated `.skeleton.tsx` files and available for manual use:
+
+```tsx
+import { Sk } from 'skeletal-ui'
+```
+
+All primitives are:
+- CSS-only (no JavaScript animation)
+- Server-safe
+- Zero-dependency
+- `aria-hidden="true"` — screen readers skip them
+
+## Available primitives
+
+| Component | Description |
+|---|---|
+| [`Sk.Text`](/primitives/text) | Single or multi-line text placeholder |
+| [`Sk.Heading`](/primitives/heading) | Heading-height shimmer block |
+| [`Sk.Avatar`](/primitives/avatar) | Circle or square avatar placeholder |
+| [`Sk.Image`](/primitives/image) | Rectangular image / aspect-ratio placeholder |
+| [`Sk.Button`](/primitives/button) | Button-shaped shimmer |
+| [`Sk.Badge`](/primitives/badge) | Badge or chip placeholder |
+| [`Sk.Number`](/primitives/number) | Numeric value placeholder |
+| [`Sk.Icon`](/primitives/icon) | Square icon placeholder |
+| [`Sk.List`](/primitives/list) | Repeated list of skeleton items |
+| [`Sk.Card`](/primitives/card) | Block container with composable children |
+
+## Customization
+
+Override defaults globally via `skeletal.config.ts`:
+
+```ts
+primitives: {
+  avatar: { size: 32 },
+  list: { count: 4 },
+}
+```
+
+Or per-subtree via `SkeletonProvider`:
+
+```tsx
+<SkeletonProvider primitives={{ avatar: { size: 32 } }}>
+  <App />
+</SkeletonProvider>
+```
+
+CSS variables (set globally or via `SkeletonProvider`):
+
+```css
+:root {
+  --sk-color: #e2e8f0;
+  --sk-radius: 4px;
+  --sk-duration: 2s;
+}
+```

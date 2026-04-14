@@ -1,0 +1,29 @@
+---
+title: Sk.Image
+---
+
+import { ImageShowcase } from '../../components/PrimitiveShowcase'
+
+# Sk.Image
+
+Rectangular image placeholder with aspect ratio support. Also used for `aspect-*` container divs detected during analysis.
+
+<ImageShowcase />
+
+## Usage
+
+```tsx
+<Sk.Image />                          // 16/9, full width
+<Sk.Image aspectRatio="4/3" />
+<Sk.Image aspectRatio="16/9" width="100%" />  // auto-generated for aspect-video divs
+<Sk.Image width={300} height={200} />
+```
+
+## Props
+
+| Prop | Type | Default |
+|---|---|---|
+| `width` | `string \| number` | `'100%'` |
+| `height` | `string \| number` | — |
+| `aspectRatio` | `string` | `'16/9'` |
+| `className` | `string` | — |
